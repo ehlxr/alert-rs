@@ -1,10 +1,7 @@
 use clap::Parser;
-use feishu::sdk;
-use rocket::{
-    catch, catchers, get, post, routes,
-    serde::json::{serde_json::json, Value},
-};
-use server::{index, not_found};
+
+use rocket::{catchers, routes};
+use server::{index, not_found, send_text};
 
 mod feishu;
 mod server;
@@ -29,11 +26,11 @@ struct Args {
     port: u16,
 
     /// AppID id of feishu app for get user open id
-    #[clap(short = 'i', long)]
+    #[clap(short = 'i', long, default_value = "")]
     app_id: String,
 
     /// AppSecret secret of feishu app for get user open id
-    #[clap(short = 's', long)]
+    #[clap(short = 's', long, default_value = "")]
     app_secret: String,
 
     /// Verbose show verbose log"
@@ -41,15 +38,8 @@ struct Args {
     verbose: bool,
 }
 
-fn main() {
-    match launch_rocket() {
-        Ok(_) => print!("server start "),
-        Err(err) => panic!("{}", err),
-    }
-}
-
 #[rocket::main]
-pub async fn launch_rocket() -> Result<(), rocket::Error> {
+async fn main() {
     let args = Args::parse();
 
     let figment = rocket::Config::figment()
@@ -59,10 +49,15 @@ pub async fn launch_rocket() -> Result<(), rocket::Error> {
     // let sdk = sdk::Sdk::new(args.app_id, args.app_secret);
     // println!("{}", sdk.token);
 
-    rocket::custom(figment)
-        // .mount("/", routes![index])
-        .mount("/", routes![index])
+    match rocket::custom(figment)
+        .mount("/", routes![index, send_text])
         .register("/", catchers![not_found])
         .launch()
         .await
+    {
+        Ok(_) => {
+            todo!()
+        }
+        Err(err) => panic!("{}", err),
+    }
 }

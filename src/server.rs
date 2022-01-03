@@ -1,6 +1,9 @@
 use rocket::{
-    catch, catchers, get, post, routes,
-    serde::json::{serde_json::json, Value},
+    catch, get, post,
+    serde::{
+        json::{serde_json::json, Json, Value},
+        Deserialize, Serialize,
+    },
 };
 
 // #[rocket::main]
@@ -26,7 +29,17 @@ pub fn not_found() -> Result<Value, ()> {
     }))
 }
 
-#[post("/send")]
-pub fn send() -> String {
-    "hello".to_string()
+#[post("/sendText", format = "json", data = "<message>")]
+pub fn send_text(message: Json<TextMessage>) -> Value {
+    println!("{:?}", message);
+    json!({ "status": "ok"})
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct TextMessage {
+    at: String,
+    text: String,
+    bot_id: String,
+    // open_ids: String,
 }
