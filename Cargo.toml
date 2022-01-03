@@ -1,0 +1,15 @@
+[package]
+name = "alert-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "3.0.0", features = ["derive"] }
+reqwest = { version = "0.11", features = ["json","blocking"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rocket = {version="0.5.0-rc.1", features=["json"]}
+moka = { version = "0.7", features = ["future"] }
