@@ -7,7 +7,7 @@ use rocket::{
     State,
 };
 
-use crate::feishu::helper::{self, UserHelper};
+use crate::feishu::helper::UserHelper;
 
 // #[rocket::main]
 // pub async fn launch_rocket() -> Result<(), rocket::Error> {
