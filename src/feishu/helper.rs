@@ -9,7 +9,7 @@ impl UserHelper {
     pub fn new(sdk: Sdk) -> Self {
         Self {
             sdk,
-            cache: Cache::new(100, 6000),
+            cache: Cache::new(100),
         }
     }
 

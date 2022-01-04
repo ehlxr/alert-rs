@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use moka::future::{Cache as MokaCache, CacheBuilder};
 
 #[derive(Clone)]
@@ -8,14 +6,14 @@ pub struct Cache {
 }
 
 impl Cache {
-    pub fn new(max_capacity: usize, ttl: u64) -> Self {
-        let inner = CacheBuilder::new(max_capacity)
-            .time_to_live(Duration::from_secs(ttl))
-            .build();
-        Self { inner }
-    }
+    // pub fn new(max_capacity: usize, ttl: u64) -> Self {
+    //     let inner = CacheBuilder::new(max_capacity)
+    //         .time_to_live(Duration::from_secs(ttl))
+    //         .build();
+    //     Self { inner }
+    // }
 
-    pub fn newNoTtl(max_capacity: usize) -> Self {
+    pub fn new(max_capacity: usize) -> Self {
         let inner = CacheBuilder::new(max_capacity).build();
         Self { inner }
     }
