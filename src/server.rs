@@ -33,21 +33,15 @@ pub fn not_found() -> Result<Value, ()> {
 }
 
 #[post("/sendText", format = "json", data = "<message>")]
-pub fn send_text(message: Json<TextMessage>, helper: &State<UserHelper>) -> Value {
+pub async fn send_text(message: Json<TextMessage>, helper: &State<UserHelper>) -> Value {
     let Json(msg) = message;
     println!("{:?}", msg);
 
-    match helper.cache.get(&msg.at) {
-        Some(ids) => match ids.get(0) {
-            Some(id) => {
-                println!("{}", id)
-            }
-            None => todo!(),
-        },
-        None => todo!(),
-    };
+    let ids = helper
+        .get_ids(msg.at.split(",").map(|x| x.to_string()).collect())
+        .await;
 
-    json!({ "status": "ok"})
+    json!({ "status": "ok","ids": ids})
 }
 
 #[derive(Serialize, Deserialize, Debug)]

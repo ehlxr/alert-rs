@@ -13,25 +13,33 @@ impl UserHelper {
         }
     }
 
-    pub async fn get_open_ids(&self, mobiles: Vec<String>) {
-        let mut noIdMobiles = Vec::new();
+    pub async fn get_ids(&self, mobiles: Vec<String>) -> Vec<String> {
+        let mut no_id_mobiles = Vec::new();
+        let mut ids = Vec::new();
+
         for mobile in mobiles {
-            self.cache.get(&mobile).unwrap_or_else(|mobile| {
-                noIdMobiles.push(mobile);
-            });
+            if let Some(cache_ids) = self.cache.get(&mobile) {
+                ids.extend(cache_ids);
+            } else {
+                no_id_mobiles.push(mobile);
+            }
         }
 
-        if noIdMobiles.len() <= 0 {
-            return;
+        if no_id_mobiles.len() <= 0 {
+            return ids;
         }
 
-        match self.sdk.batch_get_ids(noIdMobiles).await {
-            Ok(ids) => {
-                for id in ids.data.user_list.into_iter() {
-                    self.cache.insert(id.mobile, vec![id.user_id]).await;
+        match self.sdk.batch_get_ids(no_id_mobiles).await {
+            Ok(get_ids) => {
+                for user in get_ids.data.user_list.into_iter() {
+                    let uid = user.user_id.clone();
+                    self.cache.insert(user.mobile, vec![user.user_id]).await;
+                    ids.push(uid);
                 }
             }
             Err(_) => todo!(),
         }
+
+        return ids;
     }
 }
