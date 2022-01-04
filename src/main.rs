@@ -50,8 +50,7 @@ async fn main() {
     let sdk = sdk::Sdk::new(args.app_id, args.app_secret).await;
 
     let helper = helper::UserHelper::new(sdk);
-    let h = helper.clone();
-    tokio::spawn(refreshToken(h));
+    tokio::spawn(refresh_token(helper.clone()));
 
     let figment = rocket::Config::figment()
         .merge(("address", args.address))
@@ -65,22 +64,34 @@ async fn main() {
         .await;
 }
 
-async fn refreshToken(helper: UserHelper) {
-    match helper.sdk.get_token().await {
+async fn refresh_token(helper: UserHelper) {
+    let ttl = match helper.sdk.get_token().await {
         Ok(t) => {
             helper
                 .cache
                 .insert("token".to_string(), t.tenant_access_token)
                 .await;
+            t.expire
         }
         Err(e) => {
-            println!("{}", e)
+            println!("{}", e);
+            0
         }
-    }
+    };
 
-    let mut interval = time::interval(time::Duration::from_secs(5));
+    let mut interval = time::interval(time::Duration::from_secs((ttl - 60).try_into().unwrap()));
     loop {
         interval.tick().await;
-        println!("2333");
+        match helper.sdk.get_token().await {
+            Ok(t) => {
+                helper
+                    .cache
+                    .insert("token".to_string(), t.tenant_access_token)
+                    .await;
+            }
+            Err(e) => {
+                println!("{}", e);
+            }
+        };
     }
 }
