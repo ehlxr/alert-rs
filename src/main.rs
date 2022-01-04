@@ -1,8 +1,9 @@
 use clap::Parser;
 
-use feishu::helper;
+use feishu::helper::{self, UserHelper};
 use rocket::{catchers, routes};
 use server::{index, not_found, send_text};
+use tokio::time;
 
 use crate::feishu::sdk;
 
@@ -49,6 +50,8 @@ async fn main() {
     let sdk = sdk::Sdk::new(args.app_id, args.app_secret).await;
 
     let helper = helper::UserHelper::new(sdk);
+    let h = helper.clone();
+    tokio::spawn(print(h));
 
     let figment = rocket::Config::figment()
         .merge(("address", args.address))
@@ -60,4 +63,18 @@ async fn main() {
         .register("/", catchers![not_found])
         .launch()
         .await;
+}
+use std::time::{SystemTime, UNIX_EPOCH};
+
+async fn print(helper: UserHelper) {
+    let mut interval = time::interval(time::Duration::from_secs(5));
+    loop {
+        interval.tick().await;
+        println!("2333");
+
+        helper
+            .cache
+            .insert("d".to_string(), "233".to_string())
+            .await;
+    }
 }

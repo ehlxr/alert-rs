@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone)]
 pub struct Sdk {
     app_id: String,
     app_secret: String,
