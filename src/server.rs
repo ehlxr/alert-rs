@@ -23,7 +23,7 @@ use crate::feishu::helper::UserHelper;
 pub async fn index(helper: &State<UserHelper>) -> String {
     helper
         .cache
-        .insert("token".to_string(), vec!["ttttttt".to_string()])
+        .insert("token".to_string(), "ttttttt".to_string())
         .await;
 
     println!("cache token {:?}", helper.cache.get(&"token".to_string()));

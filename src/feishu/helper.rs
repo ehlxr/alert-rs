@@ -18,8 +18,9 @@ impl UserHelper {
         let mut ids = Vec::new();
 
         for mobile in mobiles {
-            if let Some(cache_ids) = self.cache.get(&mobile) {
-                ids.extend(cache_ids);
+            if let Some(cache_id) = self.cache.get(&mobile) {
+                // ids.extend(cache_id);
+                ids.push(cache_id);
             } else {
                 no_id_mobiles.push(mobile);
             }
@@ -38,7 +39,7 @@ impl UserHelper {
                 // }
                 for (mobile, user) in get_ids.data.mobile_users.into_iter() {
                     let open_id = &user.get(0).unwrap().open_id;
-                    self.cache.insert(mobile, vec![open_id.clone()]).await;
+                    self.cache.insert(mobile, open_id.clone()).await;
                     ids.push(open_id.to_string());
                 }
             }

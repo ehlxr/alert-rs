@@ -4,7 +4,7 @@ use moka::future::{Cache as MokaCache, CacheBuilder};
 
 #[derive(Clone)]
 pub struct Cache {
-    inner: MokaCache<String, Vec<String>>,
+    inner: MokaCache<String, String>,
 }
 
 impl Cache {
@@ -21,11 +21,11 @@ impl Cache {
     }
 
     #[allow(clippy::ptr_arg)]
-    pub fn get(&self, key: &String) -> Option<Vec<String>> {
+    pub fn get(&self, key: &String) -> Option<String> {
         self.inner.get(key)
     }
 
-    pub async fn insert(&self, key: String, value: Vec<String>) {
+    pub async fn insert(&self, key: String, value: String) {
         self.inner.insert(key, value).await;
     }
 
