@@ -3,11 +3,9 @@ use std::time::Duration;
 
 use moka::future::{Cache as MokaCache, CacheBuilder};
 
-use crate::drive::AliyunFile;
-
 #[derive(Clone)]
 pub struct Cache {
-    inner: MokaCache<String, Vec<AliyunFile>>,
+    inner: MokaCache<String, Vec<String>>,
 }
 
 impl Cache {
@@ -19,11 +17,11 @@ impl Cache {
     }
 
     #[allow(clippy::ptr_arg)]
-    pub fn get(&self, key: &String) -> Option<Vec<AliyunFile>> {
+    pub fn get(&self, key: &String) -> Option<Vec<String>> {
         self.inner.get(key)
     }
 
-    pub async fn insert(&self, key: String, value: Vec<AliyunFile>) {
+    pub async fn insert(&self, key: String, value: Vec<String>) {
         self.inner.insert(key, value).await;
     }
 

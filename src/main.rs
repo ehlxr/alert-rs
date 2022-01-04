@@ -6,6 +6,7 @@ use server::{index, not_found, send_text};
 
 use crate::feishu::sdk;
 
+mod cache;
 mod feishu;
 mod server;
 
@@ -46,26 +47,22 @@ async fn main() {
     let args = Args::parse();
 
     let sdk = sdk::Sdk::new(args.app_id, args.app_secret).await;
-    println!("{}", sdk.token);
-    // let helper = helper::UserHelper::new(sdk);
-    // let ids = sdk.batch_get_ids(vec!["+15303310032".to_string()]);
-    // match ids {
-    //     Ok(id) => println!("{:?}", id),
-    //     _ => (),
-    // }
 
-    // let figment = rocket::Config::figment()
-    //     .merge(("address", args.address))
-    //     .merge(("port", args.port));
-    // match rocket::custom(figment)
-    //     .mount("/", routes![index, send_text])
-    //     .register("/", catchers![not_found])
-    //     .launch()
-    //     .await
-    // {
-    //     Ok(_) => {
-    //         todo!()
-    //     }
-    //     Err(err) => panic!("{}", err),
-    // }
+    let helper = helper::UserHelper::new(sdk);
+
+    let figment = rocket::Config::figment()
+        .merge(("address", args.address))
+        .merge(("port", args.port));
+    match rocket::custom(figment)
+        .manage(helper)
+        .mount("/", routes![index, send_text])
+        .register("/", catchers![not_found])
+        .launch()
+        .await
+    {
+        Ok(_) => {
+            todo!()
+        }
+        Err(err) => panic!("{}", err),
+    }
 }

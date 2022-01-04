@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
 
 pub struct Sdk {
@@ -23,9 +21,9 @@ pub struct TokenResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct GetIDResponseDataUser {
-    mobile: String,
-    user_id: String,
+pub struct GetIDResponseDataUser {
+    pub mobile: String,
+    pub user_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,15 +32,15 @@ struct GetIDRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct GetIDResponseData {
-    user_list: Vec<GetIDResponseDataUser>,
+pub struct GetIDResponseData {
+    pub user_list: Vec<GetIDResponseDataUser>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetIDResponse {
     code: i32,
     msg: String,
-    data: GetIDResponseData,
+    pub data: GetIDResponseData,
 }
 
 // pub async fn get_token(sdk: Sdk) -> Result<(), reqwest::Error> {
@@ -108,7 +106,10 @@ impl Sdk {
         Ok(res)
     }
 
-    pub fn batch_get_ids(&self, mobiles: Vec<String>) -> Result<GetIDResponse, reqwest::Error> {
+    pub async fn batch_get_ids(
+        &self,
+        mobiles: Vec<String>,
+    ) -> Result<GetIDResponse, reqwest::Error> {
         // let mut api = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?".to_string();
         // for mobile in mobiles {
         //     api = format!("{}mobiles={}&", api, mobile);
@@ -117,12 +118,25 @@ impl Sdk {
 
         let new_post = GetIDRequest { mobiles };
 
-        let res: GetIDResponse = reqwest::blocking::Client::new()
+        // let res: GetIDResponse = reqwest::blocking::Client::new()
+        //     .post("https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id")
+        //     .header("Authorization", format!("Bearer {}", self.token))
+        //     .json(&new_post)
+        //     .send()?
+        //     .json()?;
+
+        // println!("{:#?}", res);
+
+        // Ok(res)
+
+        let res: GetIDResponse = reqwest::Client::new()
             .post("https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id")
             .header("Authorization", format!("Bearer {}", self.token))
             .json(&new_post)
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
 
         println!("{:#?}", res);
 

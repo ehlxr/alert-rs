@@ -4,7 +4,10 @@ use rocket::{
         json::{serde_json::json, Json, Value},
         Deserialize, Serialize,
     },
+    State,
 };
+
+use crate::feishu::helper::{self, UserHelper};
 
 // #[rocket::main]
 // pub async fn launch_rocket() -> Result<(), rocket::Error> {
@@ -30,8 +33,20 @@ pub fn not_found() -> Result<Value, ()> {
 }
 
 #[post("/sendText", format = "json", data = "<message>")]
-pub fn send_text(message: Json<TextMessage>) -> Value {
-    println!("{:?}", message);
+pub fn send_text(message: Json<TextMessage>, helper: &State<UserHelper>) -> Value {
+    let Json(msg) = message;
+    println!("{:?}", msg);
+
+    match helper.cache.get(&msg.at) {
+        Some(ids) => match ids.get(0) {
+            Some(id) => {
+                println!("{}", id)
+            }
+            None => todo!(),
+        },
+        None => todo!(),
+    };
+
     json!({ "status": "ok"})
 }
 
