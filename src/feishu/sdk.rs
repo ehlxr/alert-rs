@@ -74,7 +74,6 @@ impl Sdk {
                 sdk.token = t.tenant_access_token;
             }
             Err(e) => {
-                // todo!()
                 println!("{}", e)
             }
         }
@@ -101,8 +100,6 @@ impl Sdk {
             .json()
             .await?;
 
-        println!("{:#?}", res);
-
         Ok(res)
     }
 
@@ -124,9 +121,6 @@ impl Sdk {
         //     .json(&new_post)
         //     .send()?
         //     .json()?;
-
-        // println!("{:#?}", res);
-
         // Ok(res)
 
         let res: GetIDResponse = reqwest::Client::new()
@@ -137,8 +131,6 @@ impl Sdk {
             .await?
             .json()
             .await?;
-
-        println!("{:#?}", res);
 
         Ok(res)
     }

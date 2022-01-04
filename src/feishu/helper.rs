@@ -37,7 +37,7 @@ impl UserHelper {
                     ids.push(uid);
                 }
             }
-            Err(_) => todo!(),
+            Err(err) => println!("{}", err),
         }
 
         return ids;

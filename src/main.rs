@@ -53,16 +53,11 @@ async fn main() {
     let figment = rocket::Config::figment()
         .merge(("address", args.address))
         .merge(("port", args.port));
-    match rocket::custom(figment)
+
+    let _ = rocket::custom(figment)
         .manage(helper)
         .mount("/", routes![index, send_text])
         .register("/", catchers![not_found])
         .launch()
-        .await
-    {
-        Ok(_) => {
-            todo!()
-        }
-        Err(err) => panic!("{}", err),
-    }
+        .await;
 }
