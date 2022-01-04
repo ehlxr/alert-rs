@@ -2,7 +2,7 @@ use crate::{cache::Cache, feishu::sdk::Sdk};
 
 #[derive(Clone)]
 pub struct UserHelper {
-    sdk: Sdk,
+    pub sdk: Sdk,
     pub cache: Cache,
 }
 

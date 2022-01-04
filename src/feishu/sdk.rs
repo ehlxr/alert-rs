@@ -19,8 +19,8 @@ struct TokenRequest<'a> {
 pub struct TokenResponse {
     code: i32,
     msg: String,
-    tenant_access_token: String,
-    expire: i32,
+    pub tenant_access_token: String,
+    pub expire: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -78,24 +78,24 @@ pub struct GetIDResponse {
 
 impl Sdk {
     pub async fn new(app_id: String, app_secret: String) -> Self {
-        let mut sdk = Self {
+        Self {
             app_id,
             app_secret,
             token: "".to_string(),
-        };
-
-        match sdk.get_token().await {
-            Ok(t) => {
-                sdk.token = t.tenant_access_token;
-            }
-            Err(e) => {
-                println!("{}", e)
-            }
         }
-        sdk
+
+        // match sdk.get_token().await {
+        //     Ok(t) => {
+        //         sdk.token = t.tenant_access_token;
+        //     }
+        //     Err(e) => {
+        //         println!("{}", e)
+        //     }
+        // }
+        // sdk
     }
 
-    async fn get_token(&self) -> Result<TokenResponse, reqwest::Error> {
+    pub async fn get_token(&self) -> Result<TokenResponse, reqwest::Error> {
         let new_post = TokenRequest {
             app_id: &self.app_id,
             app_secret: &self.app_secret,

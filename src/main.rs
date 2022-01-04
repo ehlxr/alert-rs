@@ -51,7 +51,7 @@ async fn main() {
 
     let helper = helper::UserHelper::new(sdk);
     let h = helper.clone();
-    tokio::spawn(print(h));
+    tokio::spawn(refreshToken(h));
 
     let figment = rocket::Config::figment()
         .merge(("address", args.address))
@@ -64,17 +64,23 @@ async fn main() {
         .launch()
         .await;
 }
-use std::time::{SystemTime, UNIX_EPOCH};
 
-async fn print(helper: UserHelper) {
+async fn refreshToken(helper: UserHelper) {
+    match helper.sdk.get_token().await {
+        Ok(t) => {
+            helper
+                .cache
+                .insert("token".to_string(), t.tenant_access_token)
+                .await;
+        }
+        Err(e) => {
+            println!("{}", e)
+        }
+    }
+
     let mut interval = time::interval(time::Duration::from_secs(5));
     loop {
         interval.tick().await;
         println!("2333");
-
-        helper
-            .cache
-            .insert("d".to_string(), "233".to_string())
-            .await;
     }
 }
