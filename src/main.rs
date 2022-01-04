@@ -13,13 +13,13 @@ mod server;
 #[derive(Parser, Debug)]
 #[clap(about, version, author)]
 struct Args {
-    /// Webhook feishu webhook addr
+    /// BotId feishu webhook group bot id addr
     #[clap(
         short,
         long,
-        default_value = "https://open.feishu.cn/open-apis/bot/v2/hook/d66fffcc-c6af-406d-a4c3-96cb112f9fca"
+        default_value = "hook/d66fffcc-c6af-406d-a4c3-96cb112f9fca"
     )]
-    webhook: String,
+    bot_id: String,
 
     /// IP address to serve on
     #[clap(short, long, default_value = "127.0.0.1")]
