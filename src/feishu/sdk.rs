@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 pub struct Sdk {
@@ -21,25 +23,37 @@ pub struct TokenResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GetIDResponseDataUser {
-    pub mobile: String,
-    pub user_id: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 struct GetIDRequest {
     mobiles: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct GetIDResponseDataV3 {
+    pub user_list: Vec<GetIDResponseDataUserV3>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetIDResponseDataUserV3 {
+    pub mobile: String,
+    pub user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GetIDResponseData {
-    pub user_list: Vec<GetIDResponseDataUser>,
+    pub mobile_users: HashMap<String, Vec<GetIDResponseDataUser>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetIDResponseDataUser {
+    pub user_id: String,
+    pub open_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetIDResponse {
     code: i32,
     msg: String,
+    // pub data: GetIDResponseDataV3,
     pub data: GetIDResponseData,
 }
 
@@ -103,18 +117,11 @@ impl Sdk {
         Ok(res)
     }
 
-    pub async fn batch_get_ids(
+    pub async fn batch_get_ids_v3(
         &self,
         mobiles: Vec<String>,
     ) -> Result<GetIDResponse, reqwest::Error> {
-        // let mut api = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?".to_string();
-        // for mobile in mobiles {
-        //     api = format!("{}mobiles={}&", api, mobile);
-        // }
-        // let api = &api[0..api.len()];
-
         let new_post = GetIDRequest { mobiles };
-
         // let res: GetIDResponse = reqwest::blocking::Client::new()
         //     .post("https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id")
         //     .header("Authorization", format!("Bearer {}", self.token))
@@ -131,6 +138,29 @@ impl Sdk {
             .await?
             .json()
             .await?;
+
+        Ok(res)
+    }
+
+    pub async fn batch_get_ids(
+        &self,
+        mobiles: Vec<String>,
+    ) -> Result<GetIDResponse, reqwest::Error> {
+        let mut api = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?".to_string();
+        for mobile in mobiles {
+            api = format!("{}mobiles={}&", api, mobile);
+        }
+        let api = &api[0..api.len() - 1];
+
+        let res = reqwest::Client::new()
+            .get(api)
+            .header("Authorization", format!("Bearer {}", self.token))
+            .send()
+            .await?
+            .json()
+            .await?;
+
+        println!("{:?}", res);
 
         Ok(res)
     }

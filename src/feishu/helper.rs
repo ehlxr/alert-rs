@@ -31,10 +31,15 @@ impl UserHelper {
 
         match self.sdk.batch_get_ids(no_id_mobiles).await {
             Ok(get_ids) => {
-                for user in get_ids.data.user_list.into_iter() {
-                    let uid = user.user_id.clone();
-                    self.cache.insert(user.mobile, vec![user.user_id]).await;
-                    ids.push(uid);
+                // for user in get_ids.data.user_list.into_iter() {
+                //     let uid = user.user_id.clone();
+                //     self.cache.insert(user.mobile, vec![user.user_id]).await;
+                //     ids.push(uid);
+                // }
+                for (mobile, user) in get_ids.data.mobile_users.into_iter() {
+                    let open_id = &user.get(0).unwrap().open_id;
+                    self.cache.insert(mobile, vec![open_id.clone()]).await;
+                    ids.push(open_id.to_string());
                 }
             }
             Err(err) => println!("{}", err),
