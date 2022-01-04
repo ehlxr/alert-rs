@@ -20,7 +20,14 @@ use crate::feishu::helper::UserHelper;
 // }
 
 #[get("/")]
-pub fn index() -> String {
+pub async fn index(helper: &State<UserHelper>) -> String {
+    helper
+        .cache
+        .insert("token".to_string(), vec!["ttttttt".to_string()])
+        .await;
+
+    println!("cache token {:?}", helper.cache.get(&"token".to_string()));
+
     "hello".to_string()
 }
 
@@ -35,7 +42,7 @@ pub fn not_found() -> Result<Value, ()> {
 #[post("/sendText", format = "json", data = "<message>")]
 pub async fn send_text(message: Json<TextMessage>, helper: &State<UserHelper>) -> Value {
     let Json(msg) = message;
-    println!("{:?}", msg);
+    println!("cache token {:?}", helper.cache.get(&"token".to_string()));
 
     let ids = helper
         .get_ids(msg.at.split(",").map(|x| x.to_string()).collect())

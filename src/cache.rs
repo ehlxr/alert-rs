@@ -15,6 +15,11 @@ impl Cache {
         Self { inner }
     }
 
+    pub fn newNoTtl(max_capacity: usize) -> Self {
+        let inner = CacheBuilder::new(max_capacity).build();
+        Self { inner }
+    }
+
     #[allow(clippy::ptr_arg)]
     pub fn get(&self, key: &String) -> Option<Vec<String>> {
         self.inner.get(key)
