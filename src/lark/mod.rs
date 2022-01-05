@@ -3,10 +3,14 @@ pub(crate) mod server;
 use self::model::*;
 use moka::future::Cache;
 
+const GET_TOKEN_URL: &str = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
+const GET_ID_URL_V1: &str = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?";
+const GET_ID_URL_V3: &str = "https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id";
+
 impl LarkConfig {
-    fn new() -> Self {
+    fn new(max_capacity: usize) -> Self {
         Self {
-            inner: Cache::new(100),
+            inner: Cache::new(max_capacity),
         }
     }
 
@@ -21,11 +25,11 @@ impl LarkConfig {
 }
 
 impl LarkSdk {
-    pub async fn new(app_id: String, app_secret: String) -> Self {
+    pub async fn new(app_id: String, app_secret: String, cache_capacity: usize) -> Self {
         Self {
             app_id,
             app_secret,
-            config: LarkConfig::new(),
+            config: LarkConfig::new(cache_capacity),
         }
     }
 
@@ -36,13 +40,13 @@ impl LarkSdk {
         };
 
         // let res: TokenResponse = reqwest::blocking::Client::new()
-        //     .post("https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal")
+        //     .post(GET_TOKEN_URL)
         //     .json(&new_post)
         //     .send()?
         //     .json()?;
 
         let res: TokenResponse = reqwest::Client::new()
-            .post("https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal")
+            .post(GET_TOKEN_URL)
             .json(&new_post)
             .send()
             .await?
@@ -58,7 +62,7 @@ impl LarkSdk {
     ) -> Result<GetIDResponse, reqwest::Error> {
         let new_post = GetIDRequest { mobiles };
         // let res: GetIDResponse = reqwest::blocking::Client::new()
-        //     .post("https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id")
+        //     .post(GET_ID_URL_V3)
         //     .header("Authorization", format!("Bearer {}", self.token))
         //     .json(&new_post)
         //     .send()?
@@ -66,7 +70,7 @@ impl LarkSdk {
         // Ok(res)
 
         let res: GetIDResponse = reqwest::Client::new()
-            .post("https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id")
+            .post(GET_ID_URL_V3)
             .header(
                 "Authorization",
                 format!(
@@ -86,7 +90,7 @@ impl LarkSdk {
     }
 
     async fn batch_get_ids(&self, mobiles: Vec<String>) -> Result<GetIDResponse, reqwest::Error> {
-        let mut api = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?".to_string();
+        let mut api = GET_ID_URL_V1.to_string();
         for mobile in mobiles {
             api = format!("{}mobiles={}&", api, mobile);
         }

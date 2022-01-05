@@ -25,6 +25,10 @@ struct Args {
     #[clap(short, long, default_value_t = 8000)]
     port: u16,
 
+    /// Cache Capacity max capacity of config cache
+    #[clap(short, long, default_value_t = 100)]
+    cache_capacity: usize,
+
     /// AppID id of feishu app for get user open id
     #[clap(short = 'i', long, default_value = "")]
     app_id: String,
@@ -42,7 +46,7 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
-    let sdk = LarkSdk::new(args.app_id, args.app_secret).await;
+    let sdk = LarkSdk::new(args.app_id, args.app_secret, args.cache_capacity).await;
 
     tokio::spawn(refresh_token(sdk.clone()));
 
@@ -66,18 +70,20 @@ async fn refresh_token(sdk: LarkSdk) {
         thread::sleep(dur);
 
         println!("refresh_token... ");
-        interval = match sdk.get_token().await {
-            Ok(t) => {
-                sdk.config
-                    .insert("token".to_string(), t.tenant_access_token)
-                    .await;
-                (t.expire - 600).try_into().unwrap()
-            }
-            Err(e) => {
-                println!("{}", e);
-                0
-            }
+
+        interval = if let Ok(t) = sdk.get_token().await {
+            sdk.config
+                .insert("token".to_string(), t.tenant_access_token)
+                .await;
+            // https://open.feishu.cn/document/ukTMukTMukTM/uIjNz4iM2MjLyYzM
+            // Token 有效期为 2 小时，在此期间调用该接口 token 不会改变。
+            // 当 token 有效期小于 30 分的时候，再次请求获取 token 的时候，会生成一个新的 token，与此同时老的 token 依然有效。
+            // 在过期前 1 分钟刷新
+            (t.expire - 60).try_into().unwrap()
+        } else {
+            0
         };
+
         println!(
             "current token is {} will refresh after {}s",
             sdk.config.get(&"token".to_string()).unwrap(),
