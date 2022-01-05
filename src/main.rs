@@ -51,11 +51,15 @@ struct Args {
     #[clap(short = 'i', long, default_value = "")]
     app_id: String,
 
+    /// Api Version version of feishu api
+    #[clap(long = "av", default_value = "v1")]
+    api_version: String,
+
     /// AppSecret secret of feishu app for get user open id
     #[clap(short = 's', long, default_value = "")]
     app_secret: String,
 
-    /// Verbose show verbose log"
+    /// Verbose show verbose log
     #[clap(short, long)]
     verbose: bool,
 }
@@ -69,6 +73,7 @@ async fn main() {
         args.app_secret,
         args.cache_capacity,
         args.bot_id,
+        args.api_version,
     )
     .await;
 

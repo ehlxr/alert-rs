@@ -34,12 +34,14 @@ impl LarkSdk {
         app_secret: String,
         cache_capacity: usize,
         bot_id: String,
+        api_version: String,
     ) -> Self {
         Self {
             app_id,
             app_secret,
             bot_id,
             config: LarkConfig::new(cache_capacity),
+            api_version,
         }
     }
 
@@ -69,7 +71,7 @@ impl LarkSdk {
     async fn batch_get_ids_v3(
         &self,
         mobiles: Vec<String>,
-    ) -> Result<GetIDResponse, reqwest::Error> {
+    ) -> Result<GetIDResponse<GetIDResponseDataV3>, reqwest::Error> {
         let new_post = GetIDRequest { mobiles };
         // let res: GetIDResponse = reqwest::blocking::Client::new()
         //     .post(GET_ID_URL_V3)
@@ -79,7 +81,7 @@ impl LarkSdk {
         //     .json()?;
         // Ok(res)
 
-        let res: GetIDResponse = reqwest::Client::new()
+        let res = reqwest::Client::new()
             .post(GET_ID_URL_V3)
             .header(
                 "Authorization",
@@ -99,7 +101,10 @@ impl LarkSdk {
         Ok(res)
     }
 
-    async fn batch_get_ids(&self, mobiles: Vec<String>) -> Result<GetIDResponse, reqwest::Error> {
+    async fn batch_get_ids(
+        &self,
+        mobiles: Vec<String>,
+    ) -> Result<GetIDResponse<GetIDResponseData>, reqwest::Error> {
         let mut api = GET_ID_URL_V1.to_string();
         for mobile in mobiles {
             api = format!("{}mobiles={}&", api, mobile);
@@ -142,20 +147,29 @@ impl LarkSdk {
             return ids;
         }
 
-        match self.batch_get_ids_v3(no_id_mobiles).await {
-            Ok(get_ids) => {
-                for user in get_ids.data.user_list.into_iter() {
-                    let uid = user.user_id.clone();
-                    self.config.insert(user.mobile, user.user_id).await;
-                    ids.push(uid);
+        if "v1" == self.api_version {
+            match self.batch_get_ids(no_id_mobiles).await {
+                Ok(get_ids) => {
+                    for (mobile, user) in get_ids.data.mobile_users.into_iter() {
+                        let open_id = &user.get(0).unwrap().open_id;
+                        self.config.insert(mobile, open_id.clone()).await;
+                        ids.push(open_id.to_string());
+                    }
                 }
-                // for (mobile, user) in get_ids.data.mobile_users.into_iter() {
-                //     let open_id = &user.get(0).unwrap().open_id;
-                //     self.config.insert(mobile, open_id.clone()).await;
-                //     ids.push(open_id.to_string());
-                // }
+                Err(err) => println!("get user id error {}", err),
             }
-            Err(err) => println!("get user id error {}", err),
+        } else {
+            match self.batch_get_ids_v3(no_id_mobiles).await {
+                Ok(get_ids) => {
+                    for user in get_ids.data.user_list.into_iter() {
+                        let uid = user.user_id.clone();
+                        self.config.insert(user.mobile, user.user_id).await;
+                        ids.push(uid);
+                    }
+                }
+
+                Err(err) => println!("get user id error {}", err),
+            }
         }
 
         return ids;

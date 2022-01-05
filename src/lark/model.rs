@@ -10,6 +10,7 @@ pub struct LarkSdk {
     pub(crate) app_secret: String,
     pub(crate) bot_id: String,
     pub config: LarkConfig,
+    pub(crate) api_version: String,
 }
 
 #[derive(Clone)]
@@ -60,11 +61,12 @@ pub struct GetIDResponseDataUser {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GetIDResponse {
+pub struct GetIDResponse<T> {
     code: i32,
     msg: String,
-    pub data: GetIDResponseDataV3,
+    pub data: T,
     // pub data: GetIDResponseData,
+    // pub data: GetIDResponseDataV3,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
