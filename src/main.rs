@@ -2,10 +2,11 @@ mod lark;
 
 use clap::Parser;
 use lark::model::LarkSdk;
-use lark::server::{index, not_found, send_text};
+use lark::server::{group_message, index, message, not_found};
 use rocket::{catchers, routes};
 
-use std::sync::Mutex;
+use std::collections::HashMap;
+use std::sync::RwLock;
 use std::{thread, time};
 use tera::Tera;
 
@@ -24,7 +25,7 @@ lazy_static! {
         tera.autoescape_on(vec![".tmpl"]);
         tera
     };
-    static ref ARRAY: Mutex<Vec<u8>> = Mutex::new(vec![]);
+    static ref CACHE: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
 
 #[derive(Parser, Debug)]
@@ -79,7 +80,7 @@ async fn main() {
 
     let _ = rocket::custom(figment)
         .manage(sdk)
-        .mount("/", routes![index, send_text])
+        .mount("/", routes![index, group_message, message])
         .register("/", catchers![not_found])
         .launch()
         .await;
@@ -95,6 +96,11 @@ async fn refresh_token(sdk: LarkSdk) {
         println!("refresh_token... ");
 
         interval = if let Ok(t) = sdk.get_token().await {
+            CACHE
+                .write()
+                .unwrap()
+                .insert("token".to_string(), t.tenant_access_token.clone());
+
             sdk.config
                 .insert("token".to_string(), t.tenant_access_token)
                 .await;

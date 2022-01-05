@@ -6,8 +6,8 @@ use rocket::{
 use tera::Context;
 
 use crate::{
-    lark::model::{LarkSdk, TextMessage},
-    ARRAY, TEMPLATES,
+    lark::model::{GroupTextMessage, LarkSdk, TextMessage},
+    CACHE, TEMPLATES,
 };
 
 // #[rocket::main]
@@ -22,8 +22,14 @@ use crate::{
 
 #[get("/")]
 pub async fn index(sdk: &State<LarkSdk>) -> String {
-    println!("cache token {:?}", sdk.config.get(&"token".to_string()));
-
+    println!(
+        "config cache token {}",
+        sdk.config.get(&"token".to_string()).unwrap()
+    );
+    println!(
+        "cache token {}",
+        CACHE.read().unwrap().get(&"token".to_string()).unwrap()
+    );
     "hello".to_string()
 }
 
@@ -35,26 +41,48 @@ pub fn not_found() -> Result<Value, ()> {
     }))
 }
 
-#[post("/sendText", format = "json", data = "<message>")]
-pub async fn send_text(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value {
+#[post("/group/message", format = "json", data = "<message>")]
+pub async fn group_message(message: Json<GroupTextMessage>, sdk: &State<LarkSdk>) -> Value {
     let Json(msg) = message;
 
     let ids = sdk
-        .get_ids(msg.at.split(",").map(|x| x.to_string()).collect())
+        .get_ids(msg.mobiles.split(",").map(|x| x.to_string()).collect())
         .await;
 
     let mut context = Context::new();
     context.insert("text", &msg.text);
     context.insert("openids", &ids);
-    let content = TEMPLATES.render("text.tmpl", &context).unwrap();
+    let content = TEMPLATES.render("group_message.tmpl", &context).unwrap();
 
     let mut status = String::from("ok");
     if let Err(e) = sdk.webhook(msg.bot_id, content).await {
         status = format!("{}", e)
     }
 
-    ARRAY.lock().unwrap().push(1);
-    println!("called {}", ARRAY.lock().unwrap().len());
+    json!({ "status": status })
+}
+
+#[post("/message", format = "json", data = "<message>")]
+pub async fn message(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value {
+    let Json(msg) = message;
+
+    let ids = sdk
+        .get_ids(msg.mobiles.split(",").map(|x| x.to_string()).collect())
+        .await;
+
+    let mut context = Context::new();
+    let mut status = String::from("ok");
+
+    for openid in ids {
+        context.insert("text", &msg.text);
+        context.insert("openid", &openid);
+        let content = TEMPLATES.render("message.tmpl", &context).unwrap();
+
+        if let Err(e) = sdk.message(content).await {
+            status = format!("{}", e);
+            break;
+        }
+    }
 
     json!({ "status": status })
 }

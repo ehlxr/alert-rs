@@ -1,5 +1,6 @@
 pub(crate) mod model;
 pub(crate) mod server;
+
 use self::model::*;
 use moka::future::Cache;
 use reqwest::Response;
@@ -8,6 +9,7 @@ const GET_TOKEN_URL: &str = "https://open.feishu.cn/open-apis/auth/v3/tenant_acc
 const GET_ID_URL_V1: &str = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?";
 const GET_ID_URL_V3: &str = "https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id";
 const WEBHOOK_URL: &str = "https://open.feishu.cn/open-apis/bot/v2/hook/";
+const MESSAGE_URL: &str = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id";
 
 impl LarkConfig {
     fn new(max_capacity: usize) -> Self {
@@ -140,18 +142,18 @@ impl LarkSdk {
             return ids;
         }
 
-        match self.batch_get_ids(no_id_mobiles).await {
+        match self.batch_get_ids_v3(no_id_mobiles).await {
             Ok(get_ids) => {
-                // for user in get_ids.data.user_list.into_iter() {
-                //     let uid = user.user_id.clone();
-                //     self.cache.insert(user.mobile, vec![user.user_id]).await;
-                //     ids.push(uid);
-                // }
-                for (mobile, user) in get_ids.data.mobile_users.into_iter() {
-                    let open_id = &user.get(0).unwrap().open_id;
-                    self.config.insert(mobile, open_id.clone()).await;
-                    ids.push(open_id.to_string());
+                for user in get_ids.data.user_list.into_iter() {
+                    let uid = user.user_id.clone();
+                    self.config.insert(user.mobile, user.user_id).await;
+                    ids.push(uid);
                 }
+                // for (mobile, user) in get_ids.data.mobile_users.into_iter() {
+                //     let open_id = &user.get(0).unwrap().open_id;
+                //     self.config.insert(mobile, open_id.clone()).await;
+                //     ids.push(open_id.to_string());
+                // }
             }
             Err(err) => println!("get user id error {}", err),
         }
@@ -172,6 +174,25 @@ impl LarkSdk {
 
         let res = reqwest::Client::new()
             .post(api)
+            .body(content)
+            .send()
+            .await?;
+
+        Ok(res)
+    }
+
+    pub async fn message(&self, content: String) -> Result<Response, reqwest::Error> {
+        let res = reqwest::Client::new()
+            .post(MESSAGE_URL)
+            .header(
+                "Authorization",
+                format!(
+                    "Bearer {}",
+                    self.config
+                        .get(&"token".to_string())
+                        .expect("token is none")
+                ),
+            )
             .body(content)
             .send()
             .await?;
