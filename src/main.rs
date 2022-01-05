@@ -41,11 +41,9 @@ struct Args {
 #[rocket::main]
 async fn main() {
     let args = Args::parse();
+
     let sdk = LarkSdk::new(args.app_id, args.app_secret).await;
 
-    // let sdk = sdk::Sdk::new(args.app_id, args.app_secret).await;
-
-    // let helper = helper::UserHelper::new(sdk);
     tokio::spawn(refresh_token(sdk.clone()));
 
     let figment = rocket::Config::figment()
@@ -68,7 +66,6 @@ async fn refresh_token(sdk: LarkSdk) {
         thread::sleep(dur);
 
         println!("refresh_token... ");
-
         interval = match sdk.get_token().await {
             Ok(t) => {
                 sdk.config
@@ -82,8 +79,8 @@ async fn refresh_token(sdk: LarkSdk) {
             }
         };
         println!(
-            "current token is {:?} will refresh after {:?}",
-            sdk.config.get(&"token".to_string()),
+            "current token is {} will refresh after {}s",
+            sdk.config.get(&"token".to_string()).unwrap(),
             interval
         );
     }
