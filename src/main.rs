@@ -46,7 +46,13 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
-    let sdk = LarkSdk::new(args.app_id, args.app_secret, args.cache_capacity).await;
+    let sdk = LarkSdk::new(
+        args.app_id,
+        args.app_secret,
+        args.cache_capacity,
+        args.bot_id,
+    )
+    .await;
 
     tokio::spawn(refresh_token(sdk.clone()));
 

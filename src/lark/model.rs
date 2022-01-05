@@ -8,6 +8,7 @@ pub struct LarkSdk {
     // `pub(crate)` 使得只在当前 crate 中可见
     pub(crate) app_id: String,
     pub(crate) app_secret: String,
+    pub(crate) bot_id: String,
     pub config: LarkConfig,
 }
 
@@ -48,6 +49,7 @@ pub struct GetIDResponseDataUserV3 {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetIDResponseData {
+    #[serde(default)] // 如果反序列化时不存在该值，则使用 Default::default()
     pub mobile_users: HashMap<String, Vec<GetIDResponseDataUser>>,
 }
 

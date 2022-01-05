@@ -25,10 +25,16 @@ impl LarkConfig {
 }
 
 impl LarkSdk {
-    pub async fn new(app_id: String, app_secret: String, cache_capacity: usize) -> Self {
+    pub async fn new(
+        app_id: String,
+        app_secret: String,
+        cache_capacity: usize,
+        bot_id: String,
+    ) -> Self {
         Self {
             app_id,
             app_secret,
+            bot_id,
             config: LarkConfig::new(cache_capacity),
         }
     }
@@ -147,7 +153,7 @@ impl LarkSdk {
                     ids.push(open_id.to_string());
                 }
             }
-            Err(err) => println!("{}", err),
+            Err(err) => println!("get user id error {}", err),
         }
 
         return ids;
