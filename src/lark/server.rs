@@ -7,7 +7,7 @@ use rocket::{
     State,
 };
 
-use crate::feishu::helper::UserHelper;
+use crate::lark::model::LarkSdk;
 
 // #[rocket::main]
 // pub async fn launch_rocket() -> Result<(), rocket::Error> {
@@ -20,8 +20,8 @@ use crate::feishu::helper::UserHelper;
 // }
 
 #[get("/")]
-pub async fn index(helper: &State<UserHelper>) -> String {
-    println!("cache token {:?}", helper.cache.get(&"token".to_string()));
+pub async fn index(sdk: &State<LarkSdk>) -> String {
+    println!("cache token {:?}", sdk.config.get(&"token".to_string()));
 
     "hello".to_string()
 }
@@ -35,11 +35,11 @@ pub fn not_found() -> Result<Value, ()> {
 }
 
 #[post("/sendText", format = "json", data = "<message>")]
-pub async fn send_text(message: Json<TextMessage>, helper: &State<UserHelper>) -> Value {
+pub async fn send_text(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value {
     let Json(msg) = message;
-    println!("cache token {:?}", helper.cache.get(&"token".to_string()));
+    println!("cache token {:?}", sdk.config.get(&"token".to_string()));
 
-    let ids = helper
+    let ids = sdk
         .get_ids(msg.at.split(",").map(|x| x.to_string()).collect())
         .await;
 

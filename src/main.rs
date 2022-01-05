@@ -1,15 +1,10 @@
+mod lark;
+
 use clap::Parser;
-
-use feishu::helper::{self, UserHelper};
+use lark::model::LarkSdk;
+use lark::server::{index, not_found, send_text};
 use rocket::{catchers, routes};
-use server::{index, not_found, send_text};
 use std::{thread, time};
-
-use crate::feishu::sdk;
-
-mod cache;
-mod feishu;
-mod server;
 
 #[derive(Parser, Debug)]
 #[clap(about, version, author)]
@@ -46,25 +41,26 @@ struct Args {
 #[rocket::main]
 async fn main() {
     let args = Args::parse();
+    let sdk = LarkSdk::new(args.app_id, args.app_secret).await;
 
-    let sdk = sdk::Sdk::new(args.app_id, args.app_secret).await;
+    // let sdk = sdk::Sdk::new(args.app_id, args.app_secret).await;
 
-    let helper = helper::UserHelper::new(sdk);
-    tokio::spawn(refresh_token(helper.clone()));
+    // let helper = helper::UserHelper::new(sdk);
+    tokio::spawn(refresh_token(sdk.clone()));
 
     let figment = rocket::Config::figment()
         .merge(("address", args.address))
         .merge(("port", args.port));
 
     let _ = rocket::custom(figment)
-        .manage(helper)
+        .manage(sdk)
         .mount("/", routes![index, send_text])
         .register("/", catchers![not_found])
         .launch()
         .await;
 }
 
-async fn refresh_token(helper: UserHelper) {
+async fn refresh_token(sdk: LarkSdk) {
     let mut interval = 0;
 
     loop {
@@ -73,10 +69,9 @@ async fn refresh_token(helper: UserHelper) {
 
         println!("refresh_token... ");
 
-        interval = match helper.sdk.get_token().await {
+        interval = match sdk.get_token().await {
             Ok(t) => {
-                helper
-                    .cache
+                sdk.config
                     .insert("token".to_string(), t.tenant_access_token)
                     .await;
                 (t.expire - 600).try_into().unwrap()
@@ -88,7 +83,7 @@ async fn refresh_token(helper: UserHelper) {
         };
         println!(
             "current token is {:?} will refresh after {:?}",
-            helper.cache.get(&"token".to_string()),
+            sdk.config.get(&"token".to_string()),
             interval
         );
     }
