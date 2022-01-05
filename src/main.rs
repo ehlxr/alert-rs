@@ -3,7 +3,7 @@ use clap::Parser;
 use feishu::helper::{self, UserHelper};
 use rocket::{catchers, routes};
 use server::{index, not_found, send_text};
-use tokio::time;
+use std::{thread, time};
 
 use crate::feishu::sdk;
 
@@ -65,33 +65,31 @@ async fn main() {
 }
 
 async fn refresh_token(helper: UserHelper) {
-    let ttl = match helper.sdk.get_token().await {
-        Ok(t) => {
-            helper
-                .cache
-                .insert("token".to_string(), t.tenant_access_token)
-                .await;
-            t.expire
-        }
-        Err(e) => {
-            println!("{}", e);
-            0
-        }
-    };
+    let mut interval = 0;
 
-    let mut interval = time::interval(time::Duration::from_secs((ttl - 60).try_into().unwrap()));
     loop {
-        interval.tick().await;
-        match helper.sdk.get_token().await {
+        let dur = time::Duration::from_secs(interval);
+        thread::sleep(dur);
+
+        println!("refresh_token... ");
+
+        interval = match helper.sdk.get_token().await {
             Ok(t) => {
                 helper
                     .cache
                     .insert("token".to_string(), t.tenant_access_token)
                     .await;
+                (t.expire - 600).try_into().unwrap()
             }
             Err(e) => {
                 println!("{}", e);
+                0
             }
         };
+        println!(
+            "current token is {:?} will refresh after {:?}",
+            helper.cache.get(&"token".to_string()),
+            interval
+        );
     }
 }
