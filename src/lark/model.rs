@@ -66,3 +66,12 @@ pub struct GetIDResponse {
     // pub data: GetIDResponseDataV3,
     pub data: GetIDResponseData,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct TextMessage {
+    pub(crate) at: String,
+    pub(crate) text: String,
+    #[serde(default)] // 如果反序列化时不存在该值，则使用 Default::default()
+    pub(crate) bot_id: String,
+}

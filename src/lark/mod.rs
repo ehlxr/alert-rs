@@ -2,10 +2,12 @@ pub(crate) mod model;
 pub(crate) mod server;
 use self::model::*;
 use moka::future::Cache;
+use reqwest::Response;
 
 const GET_TOKEN_URL: &str = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
 const GET_ID_URL_V1: &str = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?";
 const GET_ID_URL_V3: &str = "https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id";
+const WEBHOOK_URL: &str = "https://open.feishu.cn/open-apis/bot/v2/hook/";
 
 impl LarkConfig {
     fn new(max_capacity: usize) -> Self {
@@ -118,8 +120,6 @@ impl LarkSdk {
             .json()
             .await?;
 
-        println!("{:?}", res);
-
         Ok(res)
     }
 
@@ -157,5 +157,25 @@ impl LarkSdk {
         }
 
         return ids;
+    }
+
+    pub async fn webhook(
+        &self,
+        bot_id: String,
+        content: String,
+    ) -> Result<Response, reqwest::Error> {
+        let mut bid = &bot_id;
+        if bot_id == "" {
+            bid = &self.bot_id;
+        }
+        let api = format!("{}{}", WEBHOOK_URL, bid);
+
+        let res = reqwest::Client::new()
+            .post(api)
+            .body(content)
+            .send()
+            .await?;
+
+        Ok(res)
     }
 }

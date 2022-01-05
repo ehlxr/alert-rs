@@ -13,3 +13,5 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rocket = {version="0.5.0-rc.1", features=["json"]}
 moka = { version = "0.6.3", features = ["future"] }
+tera = {version="1", default-features = false}
+lazy_static = "1.4.0"

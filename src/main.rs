@@ -4,17 +4,34 @@ use clap::Parser;
 use lark::model::LarkSdk;
 use lark::server::{index, not_found, send_text};
 use rocket::{catchers, routes};
+
+use std::sync::Mutex;
 use std::{thread, time};
+use tera::Tera;
+
+#[macro_use]
+extern crate lazy_static;
+
+lazy_static! {
+    pub static ref TEMPLATES: Tera = {
+        let mut tera = match Tera::new("templates/**/*") {
+            Ok(t) => t,
+            Err(e) => {
+                println!("Parsing error(s): {}", e);
+                ::std::process::exit(1);
+            }
+        };
+        tera.autoescape_on(vec![".tmpl"]);
+        tera
+    };
+    static ref ARRAY: Mutex<Vec<u8>> = Mutex::new(vec![]);
+}
 
 #[derive(Parser, Debug)]
 #[clap(about, version, author)]
 struct Args {
     /// BotId feishu webhook group bot id addr
-    #[clap(
-        short,
-        long,
-        default_value = "hook/d66fffcc-c6af-406d-a4c3-96cb112f9fca"
-    )]
+    #[clap(short, long, default_value = "d66fffcc-c6af-406d-a4c3-96cb112f9fca")]
     bot_id: String,
 
     /// IP address to serve on

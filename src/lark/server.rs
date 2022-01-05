@@ -1,13 +1,14 @@
 use rocket::{
     catch, get, post,
-    serde::{
-        json::{serde_json::json, Json, Value},
-        Deserialize, Serialize,
-    },
+    serde::json::{serde_json::json, Json, Value},
     State,
 };
+use tera::Context;
 
-use crate::lark::model::LarkSdk;
+use crate::{
+    lark::model::{LarkSdk, TextMessage},
+    ARRAY, TEMPLATES,
+};
 
 // #[rocket::main]
 // pub async fn launch_rocket() -> Result<(), rocket::Error> {
@@ -42,14 +43,18 @@ pub async fn send_text(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Valu
         .get_ids(msg.at.split(",").map(|x| x.to_string()).collect())
         .await;
 
-    json!({ "status": "ok","ids": ids})
-}
+    let mut context = Context::new();
+    context.insert("text", &msg.text);
+    context.insert("openids", &ids);
+    let content = TEMPLATES.render("text.tmpl", &context).unwrap();
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct TextMessage {
-    at: String,
-    text: String,
-    bot_id: String,
-    // open_ids: String,
+    let mut status = String::from("ok");
+    if let Err(e) = sdk.webhook(msg.bot_id, content).await {
+        status = format!("{}", e)
+    }
+
+    ARRAY.lock().unwrap().push(1);
+    println!("called {}", ARRAY.lock().unwrap().len());
+
+    json!({ "status": status })
 }
