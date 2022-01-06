@@ -39,6 +39,7 @@ pub struct GetIDRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetIDResponseDataV3 {
+    #[serde(default)]
     pub user_list: Vec<GetIDResponseDataUserV3>,
 }
 
@@ -75,7 +76,7 @@ pub struct GroupTextMessage {
     #[serde(default)] // 如果反序列化时不存在该值，则使用 Default::default()
     pub(crate) mobiles: String,
     pub(crate) text: String,
-    #[serde(default)] // 如果反序列化时不存在该值，则使用 Default::default()
+    #[serde(default)]
     pub(crate) bot_id: String,
 }
 

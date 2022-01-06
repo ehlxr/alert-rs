@@ -98,6 +98,7 @@ impl LarkSdk {
             .json()
             .await?;
 
+        println!("{:?}", res);
         Ok(res)
     }
 
