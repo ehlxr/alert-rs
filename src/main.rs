@@ -7,10 +7,10 @@ use rocket::{catchers, routes};
 
 use std::collections::HashMap;
 use std::sync::RwLock;
-use std::{env, thread, time};
+use std::{env, thread, time as stdTime};
 use tera::Tera;
-use tracing::info;
-use tracing_subscriber;
+
+use tracing::{debug, info};
 
 #[macro_use]
 extern crate lazy_static;
@@ -68,13 +68,23 @@ struct Args {
 
 #[rocket::main]
 async fn main() {
+    let args = Args::parse();
+
     if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "info");
+        if args.verbose {
+            env::set_var("RUST_LOG", "debug");
+            // env::set_var("RUST_LOG", "alert_rs=debug");
+        } else {
+            env::set_var("RUST_LOG", "info");
+        }
     }
     tracing_subscriber::fmt::init();
+    // let subscriber = tracing_subscriber::fmt()
+    //     .with_timer(time::LocalTime::rfc_3339())
+    //     // ... add configuration
+    //     .finish();
 
-    info!("hello....");
-    let args = Args::parse();
+    debug!("hello....");
 
     let sdk = LarkSdk::new(
         args.app_id,
@@ -103,7 +113,7 @@ async fn refresh_token(sdk: LarkSdk) {
     let mut interval = 0;
 
     loop {
-        let dur = time::Duration::from_secs(interval);
+        let dur = stdTime::Duration::from_secs(interval);
         thread::sleep(dur);
 
         info!("refresh_token... ");
