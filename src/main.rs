@@ -32,7 +32,7 @@ lazy_static! {
 #[clap(about, version, author)]
 struct Args {
     /// BotId feishu webhook group bot id addr
-    #[clap(short, long, default_value = "d66fffcc-c6af-406d-a4c3-96cb112f9fca")]
+    #[clap(short, long, default_value = "")]
     bot_id: String,
 
     /// IP address to serve on
