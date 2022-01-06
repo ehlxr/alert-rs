@@ -1,3 +1,4 @@
+use log::{info, trace, warn};
 use rocket::{
     catch, get, post,
     serde::json::{serde_json::json, Json, Value},
@@ -44,6 +45,7 @@ pub fn not_found() -> Result<Value, ()> {
 #[post("/group/message", format = "json", data = "<message>")]
 pub async fn group_message(message: Json<GroupTextMessage>, sdk: &State<LarkSdk>) -> Value {
     let Json(msg) = message;
+    info!("receive message: {:?}", msg);
 
     let ids = sdk
         .get_ids(msg.mobiles.split(",").map(|x| x.to_string()).collect())

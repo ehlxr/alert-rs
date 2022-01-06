@@ -5,6 +5,7 @@ use lark::model::LarkSdk;
 use lark::server::{group_message, index, message, not_found};
 use rocket::{catchers, routes};
 
+use log::{info, trace, warn};
 use std::collections::HashMap;
 use std::sync::RwLock;
 use std::{thread, time};
@@ -66,6 +67,7 @@ struct Args {
 
 #[rocket::main]
 async fn main() {
+    info!("hello....");
     let args = Args::parse();
 
     let sdk = LarkSdk::new(
