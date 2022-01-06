@@ -5,11 +5,12 @@ use lark::model::LarkSdk;
 use lark::server::{group_message, index, message, not_found};
 use rocket::{catchers, routes};
 
-use log::{info, trace, warn};
 use std::collections::HashMap;
 use std::sync::RwLock;
-use std::{thread, time};
+use std::{env, thread, time};
 use tera::Tera;
+use tracing::info;
+use tracing_subscriber;
 
 #[macro_use]
 extern crate lazy_static;
@@ -67,6 +68,11 @@ struct Args {
 
 #[rocket::main]
 async fn main() {
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info");
+    }
+    tracing_subscriber::fmt::init();
+
     info!("hello....");
     let args = Args::parse();
 
@@ -100,7 +106,7 @@ async fn refresh_token(sdk: LarkSdk) {
         let dur = time::Duration::from_secs(interval);
         thread::sleep(dur);
 
-        println!("refresh_token... ");
+        info!("refresh_token... ");
 
         interval = if let Ok(t) = sdk.get_token().await {
             CACHE
@@ -120,7 +126,7 @@ async fn refresh_token(sdk: LarkSdk) {
             0
         };
 
-        println!(
+        info!(
             "current token is {} will refresh after {}s",
             sdk.config.get(&"token".to_string()).unwrap(),
             interval

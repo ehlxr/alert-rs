@@ -1,10 +1,10 @@
-use log::{info, trace, warn};
 use rocket::{
     catch, get, post,
     serde::json::{serde_json::json, Json, Value},
     State,
 };
 use tera::Context;
+use tracing::info;
 
 use crate::{
     lark::model::{GroupTextMessage, LarkSdk, TextMessage},

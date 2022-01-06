@@ -4,6 +4,7 @@ pub(crate) mod server;
 use self::model::*;
 use moka::future::Cache;
 use reqwest::Response;
+use tracing::{error, info};
 
 const GET_TOKEN_URL: &str = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
 const GET_ID_URL_V1: &str = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?";
@@ -98,7 +99,7 @@ impl LarkSdk {
             .json()
             .await?;
 
-        println!("{:?}", res);
+        info!("{:?}", res);
         Ok(res)
     }
 
@@ -127,6 +128,8 @@ impl LarkSdk {
             .await?
             .json()
             .await?;
+
+        info!("{:?}", res);
 
         Ok(res)
     }
@@ -157,7 +160,7 @@ impl LarkSdk {
                         ids.push(open_id.to_string());
                     }
                 }
-                Err(err) => println!("get user id error {}", err),
+                Err(err) => error!("get user id error {}", err),
             }
         } else {
             match self.batch_get_ids_v3(no_id_mobiles).await {
@@ -169,7 +172,7 @@ impl LarkSdk {
                     }
                 }
 
-                Err(err) => println!("get user id error {}", err),
+                Err(err) => error!("get user id error {}", err),
             }
         }
 
@@ -193,6 +196,8 @@ impl LarkSdk {
             .send()
             .await?;
 
+        info!("{:?}", res);
+
         Ok(res)
     }
 
@@ -212,6 +217,7 @@ impl LarkSdk {
             .send()
             .await?;
 
+        info!("{:?}", res);
         Ok(res)
     }
 }
