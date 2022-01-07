@@ -1,9 +1,13 @@
 mod lark;
+mod time_test;
 
 use clap::Parser;
 use lark::model::LarkSdk;
 use lark::server::{group_message, index, message, not_found};
 use rocket::{catchers, routes};
+use time::format_description;
+use time::macros::offset;
+use tracing_subscriber::fmt::time::OffsetTime;
 
 use std::collections::HashMap;
 use std::sync::RwLock;
@@ -29,6 +33,8 @@ lazy_static! {
     };
     static ref CACHE: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
+
+const FORMAT_STR: &str = "[year]-[month]-[day] [hour]:[minute]:[second]";
 
 #[derive(Parser, Debug)]
 #[clap(about, version, author)]
@@ -77,13 +83,14 @@ async fn main() {
         } else {
             env::set_var("RUST_LOG", "info");
         }
-    }
+    };
 
-    tracing_subscriber::fmt::init();
-    // tracing_subscriber::fmt()
-    //     .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
-    //     // ... add configurati/on
-    //     .init();
+    tracing_subscriber::fmt()
+        .with_timer(OffsetTime::new(
+            offset!(+8),
+            format_description::parse(FORMAT_STR).expect("parse format error"),
+        ))
+        .init();
 
     debug!("hello....");
 

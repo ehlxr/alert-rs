@@ -16,10 +16,16 @@ moka = { version = "0.6.3", features = ["future"] }
 tera = { version = "1", default-features = false }
 lazy_static = "1.4.0"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3" }
+tracing-subscriber = { version = "0.3", features = ["time"] }
 # tracing-subscriber = { version = "0.3", features = ["local-time"] }
 # time = { version = "0.3", default-features = false, features = [
 #     "formatting",
 #     "parsing",
 #     "local-offset",
 # ] }
+time = { version = "0.3.5", features = [
+    "local-offset",
+    "std",
+    "formatting",
+    "macros",
+] }
