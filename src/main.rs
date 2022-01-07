@@ -78,11 +78,12 @@ async fn main() {
             env::set_var("RUST_LOG", "info");
         }
     }
+
     tracing_subscriber::fmt::init();
-    // let subscriber = tracing_subscriber::fmt()
-    //     .with_timer(time::LocalTime::rfc_3339())
-    //     // ... add configuration
-    //     .finish();
+    // tracing_subscriber::fmt()
+    //     .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+    //     // ... add configurati/on
+    //     .init();
 
     debug!("hello....");
 
