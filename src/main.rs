@@ -11,10 +11,10 @@ use tracing_subscriber::fmt::time::OffsetTime;
 
 use std::collections::HashMap;
 use std::sync::RwLock;
-use std::{env, thread, time as stdTime};
+use std::{thread, time as stdTime};
 use tera::Tera;
 
-use tracing::{debug, info};
+use tracing::{debug, info, Level};
 
 #[macro_use]
 extern crate lazy_static;
@@ -76,23 +76,17 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
-    if env::var("RUST_LOG").is_err() {
-        if args.verbose {
-            env::set_var("RUST_LOG", "debug");
-            // env::set_var("RUST_LOG", "alert_rs=debug");
-        } else {
-            env::set_var("RUST_LOG", "info");
-        }
-    };
-
     tracing_subscriber::fmt()
         .with_timer(OffsetTime::new(
             offset!(+8),
             format_description::parse(FORMAT_STR).expect("parse format error"),
         ))
+        .with_max_level(if args.verbose {
+            Level::DEBUG
+        } else {
+            Level::INFO
+        })
         .init();
-
-    debug!("hello....");
 
     let sdk = LarkSdk::new(
         args.app_id,
@@ -124,7 +118,7 @@ async fn refresh_token(sdk: LarkSdk) {
         let dur = stdTime::Duration::from_secs(interval);
         thread::sleep(dur);
 
-        info!("refresh_token... ");
+        debug!("refresh_token... ");
 
         interval = if let Ok(t) = sdk.get_token().await {
             CACHE
