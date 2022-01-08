@@ -23,11 +23,11 @@ use crate::{
 
 #[get("/")]
 pub async fn index(sdk: &State<LarkSdk>) -> String {
-    println!(
+    info!(
         "config cache token {}",
         sdk.config.get(&"token".to_string()).unwrap()
     );
-    println!(
+    info!(
         "cache token {}",
         CACHE.read().unwrap().get(&"token".to_string()).unwrap()
     );

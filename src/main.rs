@@ -14,7 +14,7 @@ use std::sync::RwLock;
 use std::{thread, time as stdTime};
 use tera::Tera;
 
-use tracing::{debug, info, Level};
+use tracing::{debug, error, info, Level};
 
 #[macro_use]
 extern crate lazy_static;
@@ -24,7 +24,7 @@ lazy_static! {
         let mut tera = match Tera::new("templates/**/*") {
             Ok(t) => t,
             Err(e) => {
-                println!("Parsing error(s): {}", e);
+                error!("Parsing error(s): {}", e);
                 ::std::process::exit(1);
             }
         };
@@ -120,28 +120,33 @@ async fn refresh_token(sdk: LarkSdk) {
 
         debug!("refresh_token... ");
 
-        interval = if let Ok(t) = sdk.get_token().await {
-            CACHE
-                .write()
-                .unwrap()
-                .insert("token".to_string(), t.tenant_access_token.clone());
+        interval = match sdk.get_token().await {
+            Ok(t) => {
+                CACHE
+                    .write()
+                    .unwrap()
+                    .insert("token".to_string(), t.tenant_access_token.clone());
 
-            sdk.config
-                .insert("token".to_string(), t.tenant_access_token)
-                .await;
-            // https://open.feishu.cn/document/ukTMukTMukTM/uIjNz4iM2MjLyYzM
-            // Token 有效期为 2 小时，在此期间调用该接口 token 不会改变。
-            // 当 token 有效期小于 30 分的时候，再次请求获取 token 的时候，会生成一个新的 token，与此同时老的 token 依然有效。
-            // 在过期前 1 分钟刷新
-            (t.expire - 60).try_into().unwrap()
-        } else {
-            0
+                sdk.config
+                    .insert("token".to_string(), t.tenant_access_token)
+                    .await;
+
+                info!(
+                    "current token is {} will refresh after {}s",
+                    sdk.config.get(&"token".to_string()).unwrap(),
+                    interval
+                );
+
+                // https://open.feishu.cn/document/ukTMukTMukTM/uIjNz4iM2MjLyYzM
+                // Token 有效期为 2 小时，在此期间调用该接口 token 不会改变。
+                // 当 token 有效期小于 30 分的时候，再次请求获取 token 的时候，会生成一个新的 token，与此同时老的 token 依然有效。
+                // 在过期前 1 分钟刷新
+                (t.expire - 60).try_into().unwrap()
+            }
+            Err(e) => {
+                error!("get token {:?}, will retry after 60s", e);
+                60
+            }
         };
-
-        info!(
-            "current token is {} will refresh after {}s",
-            sdk.config.get(&"token".to_string()).unwrap(),
-            interval
-        );
     }
 }
