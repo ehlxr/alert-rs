@@ -1,5 +1,5 @@
 mod lark;
-mod time_test;
+mod test;
 
 use clap::Parser;
 use lark::model::LarkSdk;
