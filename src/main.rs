@@ -2,21 +2,21 @@ mod lark;
 mod test;
 
 use clap::Parser;
-use lark::model::LarkSdk;
-use lark::server::{group_message, index, message, not_found};
-use rocket::{catchers, routes};
-use time::format_description;
-use time::macros::offset;
-use tracing::metadata::LevelFilter;
-use tracing_subscriber::fmt::time::OffsetTime;
-use tracing_subscriber::EnvFilter;
-
-use std::collections::HashMap;
-use std::sync::RwLock;
-use std::{env, thread, time as stdTime};
+use lark::{
+    model::LarkSdk,
+    server::{group_message, index, message, not_found},
+};
+use rocket::{catchers, log::LogLevel, routes, Error};
+use std::{collections::HashMap, io, sync::RwLock, thread, time as stdTime};
 use tera::Tera;
-
-use tracing::{debug, error, info, Level};
+use time::{format_description, macros::offset};
+use tracing::{debug, error, info, metadata::LevelFilter};
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::{
+    fmt::{self, time::OffsetTime},
+    prelude::__tracing_subscriber_SubscriberExt,
+    EnvFilter,
+};
 
 #[macro_use]
 extern crate lazy_static;
@@ -75,10 +75,11 @@ struct Args {
 }
 
 #[rocket::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
     let args = Args::parse();
 
-    init_log(args.verbose);
+    // WorkerGuard should be assigned in the main function or whatever the entrypoint of the program is
+    let _guard = init_log(args.verbose);
 
     let sdk = LarkSdk::new(
         args.app_id,
@@ -91,43 +92,57 @@ async fn main() {
 
     tokio::spawn(refresh_token(sdk.clone()));
 
-    let figment = rocket::Config::figment()
-        .merge(("address", args.address))
-        .merge(("port", args.port));
+    rocket::custom(rocket::Config {
+        port: args.port,
+        log_level: LogLevel::Normal,
+        address: args.address.parse().expect("parse address error"),
+        ..Default::default()
+    })
+    .manage(sdk)
+    .mount("/", routes![index, group_message, message])
+    .register("/", catchers![not_found])
+    .launch()
+    .await?;
 
-    let _ = rocket::custom(figment)
-        .manage(sdk)
-        .mount("/", routes![index, group_message, message])
-        .register("/", catchers![not_found])
-        .launch()
-        .await;
+    Ok(())
 }
 
-fn init_log(verbose: bool) {
-    // env::set_var("RUST_LOG", "alert_rs=debug,rocket::launch_=error");
-    let filter = EnvFilter::from_default_env()
-        // Set the base level when not matched by other directives to WARN.
-        .add_directive(LevelFilter::WARN.into())
-        .add_directive("rocket::launch_=error".parse().unwrap())
-        .add_directive(if verbose {
-            "alert_rs=debug".parse().unwrap()
-        } else {
-            "alert_rs=info".parse().unwrap()
-        });
+fn init_log(verbose: bool) -> WorkerGuard {
+    let (non_blocking, _guard) =
+        tracing_appender::non_blocking(tracing_appender::rolling::daily("log", "alert_rs.log"));
 
-    tracing_subscriber::fmt()
-        .with_timer(OffsetTime::new(
-            offset!(+8),
-            format_description::parse(FORMAT_STR).expect("parse format error"),
-        ))
-        // .with_max_level(if verbose {
-        //     Level::DEBUG
-        // } else {
-        //     Level::INFO
-        // })
-        .with_env_filter(filter)
-        // .with_env_filter("alert_rs=debug,my_crate::my_mod=debug,[my_span]=trace")
-        .init();
+    let timer = OffsetTime::new(
+        offset!(+8),
+        format_description::parse(FORMAT_STR).expect("parse format error"),
+    );
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::registry()
+            .with(
+                EnvFilter::from_default_env()
+                    // Set the base level when not matched by other directives to WARN.
+                    .add_directive(LevelFilter::WARN.into())
+                    .add_directive("rocket::launch_=error".parse().unwrap())
+                    .add_directive(if verbose {
+                        "alert_rs=debug".parse().unwrap()
+                    } else {
+                        "alert_rs=info".parse().unwrap()
+                    }),
+            )
+            .with(
+                fmt::Layer::new()
+                    .with_timer(timer.clone())
+                    .with_writer(io::stdout), // .with_filter(LevelFilter::TRACE),
+            )
+            .with(
+                fmt::Layer::new()
+                    .with_timer(timer)
+                    .with_ansi(false)
+                    .with_writer(non_blocking), // .with_filter(LevelFilter::TRACE),
+            ),
+    )
+    .expect("Unable to set a global subscriber");
+
+    _guard
 }
 
 async fn refresh_token(sdk: LarkSdk) {
