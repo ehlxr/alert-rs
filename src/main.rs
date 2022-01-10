@@ -131,17 +131,19 @@ async fn refresh_token(sdk: LarkSdk) {
                     .insert("token".to_string(), t.tenant_access_token)
                     .await;
 
-                info!(
-                    "current token is {} will refresh after {}s",
-                    sdk.config.get(&"token".to_string()).unwrap(),
-                    interval
-                );
-
                 // https://open.feishu.cn/document/ukTMukTMukTM/uIjNz4iM2MjLyYzM
                 // Token 有效期为 2 小时，在此期间调用该接口 token 不会改变。
                 // 当 token 有效期小于 30 分的时候，再次请求获取 token 的时候，会生成一个新的 token，与此同时老的 token 依然有效。
                 // 在过期前 1 分钟刷新
-                (t.expire - 60).try_into().unwrap()
+                let refresh_time: u64 = (t.expire - 60).try_into().unwrap();
+
+                info!(
+                    "current token is {} will refresh after {}s",
+                    sdk.config.get(&"token".to_string()).unwrap(),
+                    refresh_time
+                );
+
+                refresh_time
             }
             Err(e) => {
                 error!("get token {:?}, will retry after 60s", e);
