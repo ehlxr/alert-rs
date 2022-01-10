@@ -16,7 +16,7 @@ moka = { version = "0.6.3", features = ["future"] }
 tera = { version = "1", default-features = false }
 lazy_static = "1.4.0"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["time"] }
+tracing-subscriber = { version = "0.3", features = ["time", "env-filter"] }
 time = { version = "0.3.5", features = [
     "local-offset",
     "std",

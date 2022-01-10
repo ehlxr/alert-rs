@@ -7,11 +7,13 @@ use lark::server::{group_message, index, message, not_found};
 use rocket::{catchers, routes};
 use time::format_description;
 use time::macros::offset;
+use tracing::metadata::LevelFilter;
 use tracing_subscriber::fmt::time::OffsetTime;
+use tracing_subscriber::EnvFilter;
 
 use std::collections::HashMap;
 use std::sync::RwLock;
-use std::{thread, time as stdTime};
+use std::{env, thread, time as stdTime};
 use tera::Tera;
 
 use tracing::{debug, error, info, Level};
@@ -76,17 +78,7 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
-    tracing_subscriber::fmt()
-        .with_timer(OffsetTime::new(
-            offset!(+8),
-            format_description::parse(FORMAT_STR).expect("parse format error"),
-        ))
-        .with_max_level(if args.verbose {
-            Level::DEBUG
-        } else {
-            Level::INFO
-        })
-        .init();
+    init_log(args.verbose);
 
     let sdk = LarkSdk::new(
         args.app_id,
@@ -109,6 +101,33 @@ async fn main() {
         .register("/", catchers![not_found])
         .launch()
         .await;
+}
+
+fn init_log(verbose: bool) {
+    // env::set_var("RUST_LOG", "alert_rs=debug,rocket::launch_=error");
+    let filter = EnvFilter::from_default_env()
+        // Set the base level when not matched by other directives to WARN.
+        .add_directive(LevelFilter::WARN.into())
+        .add_directive("rocket::launch_=error".parse().unwrap())
+        .add_directive(if verbose {
+            "alert_rs=debug".parse().unwrap()
+        } else {
+            "alert_rs=info".parse().unwrap()
+        });
+
+    tracing_subscriber::fmt()
+        .with_timer(OffsetTime::new(
+            offset!(+8),
+            format_description::parse(FORMAT_STR).expect("parse format error"),
+        ))
+        // .with_max_level(if verbose {
+        //     Level::DEBUG
+        // } else {
+        //     Level::INFO
+        // })
+        .with_env_filter(filter)
+        // .with_env_filter("alert_rs=debug,my_crate::my_mod=debug,[my_span]=trace")
+        .init();
 }
 
 async fn refresh_token(sdk: LarkSdk) {
