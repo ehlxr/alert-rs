@@ -10,11 +10,13 @@ use rocket::{catchers, log::LogLevel, routes, Error};
 use std::{collections::HashMap, io, sync::RwLock, thread, time as stdTime};
 use tera::Tera;
 use time::{format_description, macros::offset};
-use tracing::{debug, error, info, metadata::LevelFilter};
+use tracing::{debug, error, info, metadata::LevelFilter, Level};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
+    filter,
     fmt::{self, time::OffsetTime},
     prelude::__tracing_subscriber_SubscriberExt,
+    util::SubscriberInitExt,
     EnvFilter,
 };
 
@@ -115,32 +117,39 @@ fn init_log(verbose: bool) -> WorkerGuard {
         offset!(+8),
         format_description::parse(FORMAT_STR).expect("parse format error"),
     );
-    tracing::subscriber::set_global_default(
-        tracing_subscriber::registry()
-            .with(
-                EnvFilter::from_default_env()
-                    // Set the base level when not matched by other directives to WARN.
-                    .add_directive(LevelFilter::WARN.into())
-                    .add_directive("rocket::launch_=error".parse().unwrap())
-                    .add_directive(if verbose {
-                        "alert_rs=debug".parse().unwrap()
-                    } else {
-                        "alert_rs=info".parse().unwrap()
-                    }),
-            )
-            .with(
-                fmt::Layer::new()
-                    .with_timer(timer.clone())
-                    .with_writer(io::stdout), // .with_filter(LevelFilter::TRACE),
-            )
-            .with(
-                fmt::Layer::new()
-                    .with_timer(timer)
-                    .with_ansi(false)
-                    .with_writer(non_blocking), // .with_filter(LevelFilter::TRACE),
-            ),
-    )
-    .expect("Unable to set a global subscriber");
+
+    let subcriber = tracing_subscriber::registry()
+        // .with(
+        //     EnvFilter::from_default_env()
+        //         // Set the base level when not matched by other directives to WARN.
+        //         .add_directive(LevelFilter::WARN.into())
+        //         .add_directive("rocket::launch_=error".parse().unwrap())
+        //         .add_directive(if verbose {
+        //             "alert_rs=debug".parse().unwrap()
+        //         } else {
+        //             "alert_rs=info".parse().unwrap()
+        //         }),
+        // )
+        .with(
+            filter::Targets::new()
+                .with_target("alert_rs", if verbose { Level::DEBUG } else { Level::INFO })
+                .with_target("rocket::launch_", Level::ERROR),
+        )
+        .with(
+            fmt::Layer::new()
+                .with_timer(timer.clone())
+                .with_writer(io::stdout), // .with_filter(LevelFilter::TRACE),
+        )
+        .with(
+            fmt::Layer::new()
+                .with_timer(timer)
+                .with_ansi(false)
+                .with_writer(non_blocking), // .with_filter(LevelFilter::TRACE),
+        );
+
+    subcriber.init();
+
+    // tracing::subscriber::set_global_default(subcriber).expect("Unable to set a global subscriber");
 
     _guard
 }
