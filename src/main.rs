@@ -41,7 +41,7 @@ const FORMAT_STR: &str = "[year]-[month]-[day] [hour]:[minute]:[second]";
 #[derive(Parser, Debug)]
 #[clap(about, version, author)]
 struct Args {
-    /// BotId feishu webhook group bot id addr
+    /// BotId feishu webhook group bot id
     #[clap(short, long, default_value = "")]
     bot_id: String,
 
@@ -116,7 +116,7 @@ fn init_log(verbose: bool) -> WorkerGuard {
         format_description::parse(FORMAT_STR).expect("parse format error"),
     );
 
-    let subcriber = tracing_subscriber::registry()
+    let subscriber = tracing_subscriber::registry()
         // .with(
         //     EnvFilter::from_default_env()
         //         // Set the base level when not matched by other directives to WARN.
@@ -145,8 +145,8 @@ fn init_log(verbose: bool) -> WorkerGuard {
                 .with_writer(non_blocking), // .with_filter(LevelFilter::TRACE),
         );
 
-    // subcriber.init();
-    tracing::subscriber::set_global_default(subcriber).expect("Unable to set a global subscriber");
+    // subscriber.init();
+    tracing::subscriber::set_global_default(subscriber).expect("Unable to set a global subscriber");
 
     _guard
 }
