@@ -16,7 +16,6 @@ use tracing_subscriber::{
     filter,
     fmt::{self, time::OffsetTime},
     prelude::__tracing_subscriber_SubscriberExt,
-    util::SubscriberInitExt,
 };
 
 #[macro_use]
