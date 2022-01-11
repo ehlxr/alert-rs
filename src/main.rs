@@ -146,9 +146,8 @@ fn init_log(verbose: bool) -> WorkerGuard {
                 .with_writer(non_blocking), // .with_filter(LevelFilter::TRACE),
         );
 
-    subcriber.init();
-
-    // tracing::subscriber::set_global_default(subcriber).expect("Unable to set a global subscriber");
+    // subcriber.init();
+    tracing::subscriber::set_global_default(subcriber).expect("Unable to set a global subscriber");
 
     _guard
 }
