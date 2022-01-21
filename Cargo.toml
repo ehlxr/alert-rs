@@ -31,3 +31,9 @@ time = { version = "0.3.5", features = [
 
 chrono = "0.4"
 tracing-appender = "0.2.0"
+
+base64 = "0.13.0"
+aes = "0.7.5"
+block-modes = "0.8.1"
+rand = "0.8"
+bytebuffer = "0.2.1"

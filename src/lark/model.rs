@@ -86,3 +86,9 @@ pub struct TextMessage {
     pub(crate) mobiles: String,
     pub(crate) text: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct FeishuEvent {
+    pub(crate) encrypt: String,
+}

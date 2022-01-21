@@ -1,10 +1,10 @@
 mod lark;
 mod test;
-
+mod util;
 use clap::Parser;
 use lark::{
     model::LarkSdk,
-    server::{group_message, index, message, not_found},
+    server::{feishu_event, group_message, index, message, not_found},
 };
 use rocket::{catchers, log::LogLevel, routes, Error};
 use std::{collections::HashMap, io, sync::RwLock, thread, time as stdTime};
@@ -99,6 +99,7 @@ async fn main() -> Result<(), Error> {
         ..Default::default()
     })
     .manage(sdk)
+    .mount("/feishu", routes![feishu_event])
     .mount("/", routes![index, group_message, message])
     .register("/", catchers![not_found])
     .launch()

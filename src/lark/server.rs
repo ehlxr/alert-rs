@@ -3,11 +3,13 @@ use rocket::{
     serde::json::{serde_json::json, Json, Value},
     State,
 };
+use std::str;
 use tera::Context;
 use tracing::info;
 
 use crate::{
     lark::model::{GroupTextMessage, LarkSdk, TextMessage},
+    util::aes_cbc,
     CACHE, TEMPLATES,
 };
 
@@ -87,4 +89,28 @@ pub async fn message(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value 
     }
 
     json!({ "status": status })
+}
+
+#[post("/event", format = "json", data = "<event>")]
+pub async fn feishu_event(event: Json<Value>) -> Value {
+    let Json(value) = event;
+    info!("received value: {:?}", value);
+
+    if let Some(encrypt_value) = value.get("encrypt") {
+        if let Some(encrypt) = encrypt_value.as_str() {
+            info!("received encrypt: {}", encrypt);
+
+            if let Ok(r) = str::from_utf8(if let Ok(d) = &base64::decode(encrypt) {
+                &d
+            } else {
+                "".as_bytes()
+            }) {
+                info!("{}", r);
+                let dec = aes_cbc::decrypt("key", r);
+                info!("des: {}", dec);
+            }
+        }
+    }
+
+    json!({ "challenge": "ok" })
 }
