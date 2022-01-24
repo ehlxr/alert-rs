@@ -1,9 +1,10 @@
 use aes::Aes256;
-use block_modes::block_padding::Pkcs7;
+use block_modes::block_padding::ZeroPadding;
 use block_modes::{BlockMode, Cbc};
 use rand::seq::SliceRandom;
 
-type AesCbc = Cbc<Aes256, Pkcs7>;
+type AesCbc = Cbc<Aes256, ZeroPadding>;
+// type AesCbc = Cbc<Aes256, Pkcs7>;
 
 // 随机字符串的元素
 const BASE_STR: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

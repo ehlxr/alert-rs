@@ -106,7 +106,7 @@ pub async fn feishu_event(event: Json<Value>) -> Value {
             //         panic!("decode {}", e);
             //     }
             // };
-            let dec = util::decrtypt("vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO", encrypt);
+            let dec = aes_cbc::decrypt("vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO", encrypt);
             info!("des: {}", dec);
 
             // match str::from_utf8(decode_str) {
