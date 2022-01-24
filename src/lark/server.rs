@@ -5,11 +5,11 @@ use rocket::{
 };
 use std::str;
 use tera::Context;
-use tracing::info;
+use tracing::{error, info};
 
 use crate::{
     lark::model::{GroupTextMessage, LarkSdk, TextMessage},
-    util::aes_cbc,
+    util::{self, aes_cbc},
     CACHE, TEMPLATES,
 };
 
@@ -99,16 +99,26 @@ pub async fn feishu_event(event: Json<Value>) -> Value {
     if let Some(encrypt_value) = value.get("encrypt") {
         if let Some(encrypt) = encrypt_value.as_str() {
             info!("received encrypt: {}", encrypt);
+            // let decode_str = &match base64::decode(encrypt) {
+            //     Ok(d) => d,
 
-            if let Ok(r) = str::from_utf8(if let Ok(d) = &base64::decode(encrypt) {
-                &d
-            } else {
-                "".as_bytes()
-            }) {
-                info!("{}", r);
-                let dec = aes_cbc::decrypt("key", r);
-                info!("des: {}", dec);
-            }
+            //     Err(e) => {
+            //         panic!("decode {}", e);
+            //     }
+            // };
+            let dec = util::decrtypt("vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO", encrypt);
+            info!("des: {}", dec);
+
+            // match str::from_utf8(decode_str) {
+            //     Ok(r) => {
+            //         info!("{}", r);
+            //         let dec = aes_cbc::decrypt("key", r);
+            //         info!("des: {}", dec);
+            //     }
+            //     Err(e) => {
+            //         error!("fromutf8 {}", e);
+            //     }
+            // }
         }
     }
 

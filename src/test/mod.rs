@@ -107,17 +107,6 @@ fn offset_datetime() {
 }
 
 #[test]
-fn test_aes() {
-    let plaintext = "予定表～①??????だ";
-    let key = "vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO";
-    let enc = util::encrypt(key, plaintext);
-    println!("enc: {}", enc);
-    let dec = util::decrtypt(key, &enc);
-
-    println!("dec: {}", dec);
-}
-
-#[test]
 fn test_aes_cbc() {
     let plaintext = "予定表～①??????だ";
     let key = "vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO";
