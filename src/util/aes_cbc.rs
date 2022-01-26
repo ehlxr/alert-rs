@@ -1,9 +1,9 @@
 use aes::Aes256;
-use block_modes::block_padding::ZeroPadding;
+use block_modes::block_padding::NoPadding;
 use block_modes::{BlockMode, Cbc};
 use rand::seq::SliceRandom;
 
-type AesCbc = Cbc<Aes256, ZeroPadding>;
+type AesCbc = Cbc<Aes256, NoPadding>;
 // type AesCbc = Cbc<Aes256, Pkcs7>;
 
 // 随机字符串的元素
@@ -34,6 +34,14 @@ pub fn encrypt(key: &str, data: &str) -> String {
 
 pub fn decrypt(key: &str, data: &str) -> String {
     let bytes = base64::decode(data).unwrap();
-    let cipher = AesCbc::new_from_slices(key.as_bytes(), &bytes[0..16]).unwrap();
-    String::from_utf8(cipher.decrypt_vec(&bytes[16..]).unwrap()).unwrap()
+    let iv = &bytes[..16];
+    let cipher = AesCbc::new_from_slices(key.as_bytes(), iv).unwrap();
+    // let ciphertext = &bytes[..];
+    let ciphertext = &bytes[16..];
+    // let decrypted_ciphertext = cipher.decrypt_vec(ciphertext).unwrap();
+
+    let mut buf = ciphertext.to_vec();
+    let decrypted_ciphertext = cipher.decrypt(&mut buf).unwrap();
+
+    String::from_utf8(decrypted_ciphertext.to_vec()).unwrap()
 }

@@ -3,13 +3,13 @@ use rocket::{
     serde::json::{serde_json::json, Json, Value},
     State,
 };
-use std::str;
+
 use tera::Context;
-use tracing::{error, info};
+use tracing::info;
 
 use crate::{
     lark::model::{GroupTextMessage, LarkSdk, TextMessage},
-    util::{self, aes_cbc},
+    util::aes_cbc,
     CACHE, TEMPLATES,
 };
 
