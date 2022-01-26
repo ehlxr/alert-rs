@@ -4,8 +4,6 @@ use tracing::*;
 use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::{self, fmt::time::FormatTime};
 
-use crate::util::{self, aes_cbc};
-
 // 用来格式化日志的输出时间格式
 struct LocalTimer;
 
@@ -108,10 +106,12 @@ fn offset_datetime() {
 
 #[test]
 fn test_aes_cbc() {
-    // let plaintext = "予定表～①??????だ";
+    use crate::util::aes_cbc;
+
+    let plaintext = "予定表～①??????だ";
     let key = "vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO";
-    // let enc = aes_cbc::encrypt(key, plaintext);
-    let enc = "33sim+MR8JEaG+S9PqirSwlM/MrVbytGQlm/VhKBUqphqU0foD5fnpFa+vphyi9T4l3uAi6KrDaNQkGMHSQYLhrm3xFwHOqb1VnxP6q4QeJtHv9dO/lli6Re3OtbXd8t0NXPqitj9EmOl7kuaCAai/t77+r4V/yuQIKRidB1eYRnHdGWC4cJl61F9NNpb9iY";
+    let enc = aes_cbc::encrypt(key, plaintext);
+    // let enc = "33sim+MR8JEaG+S9PqirSwlM/MrVbytGQlm/VhKBUqphqU0foD5fnpFa+vphyi9T4l3uAi6KrDaNQkGMHSQYLhrm3xFwHOqb1VnxP6q4QeJtHv9dO/lli6Re3OtbXd8t0NXPqitj9EmOl7kuaCAai/t77+r4V/yuQIKRidB1eYRnHdGWC4cJl61F9NNpb9iY";
     println!("{}", enc);
     let dec = aes_cbc::decrypt(key, &enc);
     // assert_eq!(plaintext, dec);
