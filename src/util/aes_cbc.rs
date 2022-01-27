@@ -8,11 +8,9 @@ use sha2::{Digest, Sha256};
 type AesCbc = Cbc<Aes256, Pkcs7>;
 
 // 随机字符串的元素
-#[warn(dead_code)]
 const BASE_STR: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 // 为IV生成随机字符串
-#[warn(dead_code)]
 fn gen_ascii_chars(size: usize) -> String {
     let mut rng = &mut rand::thread_rng();
     String::from_utf8(
