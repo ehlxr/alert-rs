@@ -7,9 +7,10 @@ use lark::{
     server::{feishu_event, group_message, index, message, not_found},
 };
 use rocket::{catchers, log::LogLevel, routes, Error};
-use std::{collections::HashMap, io, sync::RwLock, thread, time as stdTime};
+use std::{collections::HashMap, io, sync::RwLock};
 use tera::Tera;
 use time::{format_description, macros::offset};
+use tokio::time::{sleep, Duration};
 use tracing::{debug, error, info, Level};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
@@ -158,9 +159,8 @@ async fn refresh_token(sdk: LarkSdk) {
     let mut interval = 0;
 
     loop {
-        let dur = stdTime::Duration::from_secs(interval);
-        thread::sleep(dur);
-
+        // std::thread::sleep(core::time::Duration::from_secs(interval));
+        sleep(Duration::from_secs(interval)).await;
         debug!("refresh_token... ");
 
         interval = match sdk.get_token().await {
