@@ -63,7 +63,7 @@ struct Args {
     app_id: String,
 
     /// Api Version version of feishu api
-    #[clap(long = "av", default_value = "v1")]
+    #[clap(short = 'V', long, default_value = "v1")]
     api_version: String,
 
     /// AppSecret secret of feishu app for get user open id
@@ -73,6 +73,10 @@ struct Args {
     /// Verbose show verbose log
     #[clap(short, long)]
     verbose: bool,
+
+    /// Encrypt Key of feishu event
+    #[clap(short = 'k', long, default_value = "")]
+    encrypt_key: String,
 }
 
 #[rocket::main]
@@ -88,6 +92,7 @@ async fn main() -> Result<(), Error> {
         args.cache_capacity,
         args.bot_id,
         args.api_version,
+        args.encrypt_key,
     )
     .await;
 

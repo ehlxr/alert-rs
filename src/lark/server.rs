@@ -92,7 +92,7 @@ pub async fn message(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value 
 }
 
 #[post("/event", format = "json", data = "<event>")]
-pub async fn feishu_event(event: Json<Value>) -> Value {
+pub async fn feishu_event(event: Json<Value>, sdk: &State<LarkSdk>) -> Value {
     let Json(value) = event;
     info!("received value: {:?}", value);
 
@@ -100,7 +100,7 @@ pub async fn feishu_event(event: Json<Value>) -> Value {
         if let Some(encrypt) = encrypt_value.as_str() {
             info!("received encrypt: {}", encrypt);
 
-            let dec = aes_cbc::decrypt("vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO", encrypt);
+            let dec = aes_cbc::decrypt(&sdk.encrypt_key, encrypt);
             dec
         } else {
             "".to_string()
@@ -109,5 +109,5 @@ pub async fn feishu_event(event: Json<Value>) -> Value {
         "".to_string()
     };
 
-    json!(decryptext)
+    serde_json::from_str(&decryptext).unwrap()
 }

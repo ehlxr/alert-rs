@@ -36,6 +36,7 @@ impl LarkSdk {
         cache_capacity: usize,
         bot_id: String,
         api_version: String,
+        encrypt_key: String,
     ) -> Self {
         Self {
             app_id,
@@ -43,6 +44,7 @@ impl LarkSdk {
             bot_id,
             config: LarkConfig::new(cache_capacity),
             api_version,
+            encrypt_key,
         }
     }
 

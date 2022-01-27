@@ -11,6 +11,7 @@ pub struct LarkSdk {
     pub(crate) bot_id: String,
     pub config: LarkConfig,
     pub(crate) api_version: String,
+    pub(crate) encrypt_key: String,
 }
 
 #[derive(Clone)]
@@ -85,10 +86,4 @@ pub struct GroupTextMessage {
 pub struct TextMessage {
     pub(crate) mobiles: String,
     pub(crate) text: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct FeishuEvent {
-    pub(crate) encrypt: String,
 }

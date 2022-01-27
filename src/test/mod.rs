@@ -109,7 +109,7 @@ fn test_aes_cbc() {
     use crate::util::aes_cbc;
 
     let plaintext = "予定表～①??????だ";
-    let key = "vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO";
+    let key = "1fq67hu12iYf3rGhlxSz6bF5ZSdWesvb";
     let enc = aes_cbc::encrypt(key, plaintext);
 
     let dec = aes_cbc::decrypt(key, &enc);
@@ -126,10 +126,10 @@ fn test_aes2() {
     let mut hasher = Sha256::new();
     type Aes256Cbc = Cbc<Aes256, NoPadding>;
 
-    hasher.update(b"vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO");
+    hasher.update(b"1fq67hu12iYf3rGhlxSz6bF5ZSdWesvb");
     let key = hasher.finalize();
 
-    // let key = "vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO".as_bytes();
+    // let key = "1fq67hu12iYf3rGhlxSz6bF5ZSdWesvb".as_bytes();
     println!("key: {:?}", key);
     // let iv = hex!("f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
     // let iv = [0u8; 16];
