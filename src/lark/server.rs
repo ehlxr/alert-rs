@@ -96,31 +96,18 @@ pub async fn feishu_event(event: Json<Value>) -> Value {
     let Json(value) = event;
     info!("received value: {:?}", value);
 
-    if let Some(encrypt_value) = value.get("encrypt") {
+    let decryptext = if let Some(encrypt_value) = value.get("encrypt") {
         if let Some(encrypt) = encrypt_value.as_str() {
             info!("received encrypt: {}", encrypt);
-            // let decode_str = &match base64::decode(encrypt) {
-            //     Ok(d) => d,
 
-            //     Err(e) => {
-            //         panic!("decode {}", e);
-            //     }
-            // };
             let dec = aes_cbc::decrypt("vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO", encrypt);
-            info!("des: {}", dec);
-
-            // match str::from_utf8(decode_str) {
-            //     Ok(r) => {
-            //         info!("{}", r);
-            //         let dec = aes_cbc::decrypt("key", r);
-            //         info!("des: {}", dec);
-            //     }
-            //     Err(e) => {
-            //         error!("fromutf8 {}", e);
-            //     }
-            // }
+            dec
+        } else {
+            "".to_string()
         }
-    }
+    } else {
+        "".to_string()
+    };
 
-    json!({ "challenge": "ok" })
+    json!(decryptext)
 }

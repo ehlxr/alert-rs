@@ -1,10 +1,11 @@
 use aes::Aes256;
-use block_modes::block_padding::NoPadding;
+use block_modes::block_padding::Pkcs7;
 use block_modes::{BlockMode, Cbc};
 use rand::seq::SliceRandom;
+use sha2::{Digest, Sha256};
 
-type AesCbc = Cbc<Aes256, NoPadding>;
-// type AesCbc = Cbc<Aes256, Pkcs7>;
+// type AesCbc = Cbc<Aes256, NoPadding>;
+type AesCbc = Cbc<Aes256, Pkcs7>;
 
 // 随机字符串的元素
 #[warn(dead_code)]
@@ -25,9 +26,13 @@ fn gen_ascii_chars(size: usize) -> String {
 }
 
 pub fn encrypt(key: &str, data: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(key.as_bytes());
+    let key = hasher.finalize();
+
     let iv_str = gen_ascii_chars(16);
     let iv = iv_str.as_bytes();
-    let cipher = AesCbc::new_from_slices(key.as_bytes(), iv).unwrap();
+    let cipher = AesCbc::new_from_slices(&key, &iv).unwrap();
     let ciphertext = cipher.encrypt_vec(data.as_bytes());
     let mut buffer = bytebuffer::ByteBuffer::from_bytes(iv);
     buffer.write_bytes(&ciphertext);
@@ -35,15 +40,15 @@ pub fn encrypt(key: &str, data: &str) -> String {
 }
 
 pub fn decrypt(key: &str, data: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(key.as_bytes());
+    let key = hasher.finalize();
+
     let bytes = base64::decode(data).unwrap();
     let iv = &bytes[..16];
-    let cipher = AesCbc::new_from_slices(key.as_bytes(), iv).unwrap();
-    // let ciphertext = &bytes[..];
+    let cipher = AesCbc::new_from_slices(&key, &iv).unwrap();
     let ciphertext = &bytes[16..];
-    // let decrypted_ciphertext = cipher.decrypt_vec(ciphertext).unwrap();
-
-    let mut buf = ciphertext.to_vec();
-    let decrypted_ciphertext = cipher.decrypt(&mut buf).unwrap();
+    let decrypted_ciphertext = cipher.decrypt_vec(ciphertext).unwrap();
 
     String::from_utf8(decrypted_ciphertext.to_vec()).unwrap()
 }

@@ -1,3 +1,4 @@
+use block_modes::block_padding::ZeroPadding;
 use chrono::Local;
 
 use tracing::*;
@@ -111,9 +112,56 @@ fn test_aes_cbc() {
     let plaintext = "予定表～①??????だ";
     let key = "vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO";
     let enc = aes_cbc::encrypt(key, plaintext);
-    // let enc = "33sim+MR8JEaG+S9PqirSwlM/MrVbytGQlm/VhKBUqphqU0foD5fnpFa+vphyi9T4l3uAi6KrDaNQkGMHSQYLhrm3xFwHOqb1VnxP6q4QeJtHv9dO/lli6Re3OtbXd8t0NXPqitj9EmOl7kuaCAai/t77+r4V/yuQIKRidB1eYRnHdGWC4cJl61F9NNpb9iY";
-    println!("{}", enc);
+
     let dec = aes_cbc::decrypt(key, &enc);
-    // assert_eq!(plaintext, dec);
-    println!("{}", dec);
+    assert_eq!(plaintext, dec);
+}
+
+#[test]
+fn test_aes2() {
+    use aes::Aes256;
+    use block_modes::block_padding::NoPadding;
+    use block_modes::{BlockMode, Cbc};
+    use sha2::{Digest, Sha256};
+
+    let mut hasher = Sha256::new();
+    type Aes256Cbc = Cbc<Aes256, NoPadding>;
+
+    hasher.update(b"vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO");
+    let key = hasher.finalize();
+
+    // let key = "vaq9ohuOdiYf8Q9UlxSz6bF5ZQqjPmpO".as_bytes();
+    println!("key: {:?}", key);
+    // let iv = hex!("f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
+    // let iv = [0u8; 16];
+
+    // let plaintext = b"Hello world!";
+    // let cipher = Aes256Cbc::new_from_slices(&key, &iv).unwrap();
+
+    // // buffer must have enough space for message+padding
+    // let mut buffer = [0u8; 32];
+    // // copy message to the buffer
+    // let pos = plaintext.len();
+    // buffer[..pos].copy_from_slice(plaintext);
+    // let ciphertext = cipher.encrypt(&mut buffer, pos).unwrap();
+
+    // // assert_eq!(ciphertext, hex!("1b7a4c403124ae2fb52bedc534d82fa8"));
+    // let bs64text = base64::encode(ciphertext);
+    // // let bs64text = "jN3VjmCYyHaxl5bUNVwLMA==";
+    let bs64text = "33sim+MR8JEaG+S9PqirSwlM/MrVbytGQlm/VhKBUqphqU0foD5fnpFa+vphyi9T4l3uAi6KrDaNQkGMHSQYLhrm3xFwHOqb1VnxP6q4QeJtHv9dO/lli6Re3OtbXd8t0NXPqitj9EmOl7kuaCAai/t77+r4V/yuQIKRidB1eYRnHdGWC4cJl61F9NNpb9iY";
+    let dbs64 = base64::decode(bs64text).unwrap();
+    let iv = &dbs64[..16];
+
+    let cipher = Aes256Cbc::new_from_slices(&key, &iv).unwrap();
+
+    let ciphertext = &dbs64[16..];
+    let mut buf = ciphertext.to_vec();
+
+    let decrypted_ciphertext = cipher.decrypt(&mut buf).unwrap();
+
+    // assert_eq!(decrypted_ciphertext, plaintext);
+    println!(
+        "decrypted_ciphertext: {}",
+        String::from_utf8(decrypted_ciphertext.to_vec()).unwrap()
+    )
 }
