@@ -90,7 +90,9 @@ async fn main() -> Result<(), Error> {
     )
     .await;
 
-    tokio::spawn(refresh_token(sdk.clone()));
+    let sdkclone = sdk.clone();
+    // thread::spawn(move || refresh_token(sdkclone));
+    tokio::spawn(refresh_token(sdkclone));
 
     rocket::custom(rocket::Config {
         port: args.port,
