@@ -5,7 +5,7 @@ use rocket::{
 };
 
 use tera::Context;
-use tracing::info;
+use tracing::{debug, info};
 
 use crate::{
     lark::model::{GroupTextMessage, LarkSdk, TextMessage},
@@ -94,20 +94,26 @@ pub async fn message(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value 
 #[post("/event", format = "json", data = "<event>")]
 pub async fn feishu_event(event: Json<Value>, sdk: &State<LarkSdk>) -> Value {
     let Json(value) = event;
-    info!("received value: {:?}", value);
+    debug!("feishu event received param: {:?}", value);
 
     let decryptext = if let Some(encrypt_value) = value.get("encrypt") {
-        if let Some(encrypt) = encrypt_value.as_str() {
-            info!("received encrypt: {}", encrypt);
-
-            let dec = aes_cbc::decrypt(&sdk.encrypt_key, encrypt);
-            dec
-        } else {
-            "".to_string()
+        match encrypt_value.as_str() {
+            Some(encrypt) => {
+                debug!("fetch encrypt from param: {}", encrypt);
+                aes_cbc::decrypt(&sdk.encrypt_key, encrypt)
+            }
+            None => return json!("encrypt string is none"),
         }
     } else {
-        "".to_string()
+        return json!("there is no encrypt content");
     };
 
-    serde_json::from_str(&decryptext).unwrap()
+    info!("decrypt param: {}", decryptext);
+
+    let result: Value = serde_json::from_str(&decryptext).unwrap();
+    if let Some(challenge) = result["challenge"].as_str() {
+        json!({ "challenge": challenge })
+    } else {
+        json!("")
+    }
 }
