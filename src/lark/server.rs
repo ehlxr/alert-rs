@@ -97,29 +97,39 @@ async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>>
     let message = &result["event"]["message"];
     let mut context = Context::new();
 
-    let ct: Value =
-        serde_json::from_str(message["content"].as_str().unwrap_or_default()).unwrap_or_default();
-    context.insert("text", ct["text"].as_str().unwrap_or("hello"));
     context.insert(
         "receive_id",
         message["chat_id"].as_str().unwrap_or_default(),
     );
 
-    if message["chat_type"].as_str().unwrap_or_default() == "group" {
-        let is_robot = if let Some(mentions) = message["mentions"].as_array() {
-            let mut is_robot = false;
-            for mention in mentions.iter() {
-                if mention["name"].as_str().unwrap_or_default() == sdk.robot_name {
-                    is_robot = true;
-                    break;
-                }
+    let (mention_robot, mention_key) = if let Some(mentions) = message["mentions"].as_array() {
+        let mut is_robot = false;
+        let mut mention_key = "";
+        for mention in mentions.iter() {
+            if mention["name"].as_str().unwrap_or_default() == sdk.robot_name {
+                is_robot = true;
+                mention_key = mention["key"].as_str().unwrap_or_default();
+                break;
             }
-            is_robot
-        } else {
-            false
-        };
+        }
+        (is_robot, mention_key)
+    } else {
+        (false, "")
+    };
 
-        if is_robot {
+    let ct: Value =
+        serde_json::from_str(message["content"].as_str().unwrap_or_default()).unwrap_or_default();
+    context.insert(
+        "text",
+        // 如果 @机器人 content text 内容为 "@_user_1 消息内容" @_user_1 为 mention_key,
+        &ct["text"]
+            .as_str()
+            .unwrap_or("hello")
+            .replace(mention_key, ""),
+    );
+
+    if message["chat_type"].as_str().unwrap_or_default() == "group" {
+        if mention_robot {
             context.insert("at_id", &result["event"]["sender"]["sender_id"]["union_id"]);
             sdk.message(
                 "chat_id",
