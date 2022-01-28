@@ -97,10 +97,10 @@ async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>>
     let message = &result["event"]["message"];
 
     let mut context = Context::new();
-    context.insert(
-        "text",
-        message["content"]["text"].as_str().unwrap_or("hello"),
-    );
+
+    let ct: Value =
+        serde_json::from_str(message["content"].as_str().unwrap_or_default()).unwrap_or_default();
+    context.insert("text", ct["text"].as_str().unwrap_or("hello"));
     context.insert(
         "receive_id",
         message["chat_id"].as_str().unwrap_or_default(),
