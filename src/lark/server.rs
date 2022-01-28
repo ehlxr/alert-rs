@@ -100,7 +100,10 @@ pub async fn feishu_event(event: Json<Value>, sdk: &State<LarkSdk>) -> Value {
         match encrypt_value.as_str() {
             Some(encrypt) => {
                 debug!("fetch encrypt from param: {}", encrypt);
-                aes_cbc::decrypt(&sdk.encrypt_key, encrypt)
+                match aes_cbc::decrypt(&sdk.encrypt_key, encrypt) {
+                    Ok(dt) => dt,
+                    Err(err) => return json!(format!("decrypt received param error {:?}", err)),
+                }
             }
             None => return json!("encrypt string is none"),
         }

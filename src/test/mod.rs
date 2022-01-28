@@ -110,9 +110,9 @@ fn test_aes_cbc() {
 
     let plaintext = "予定表～①??????だ";
     let key = "1fq67hu12iYf3rGhlxSz6bF5ZSdWesvb";
-    let enc = aes_cbc::encrypt(key, plaintext);
+    let enc = aes_cbc::encrypt(key, plaintext).unwrap();
 
-    let dec = aes_cbc::decrypt(key, &enc);
+    let dec = aes_cbc::decrypt(key, &enc).unwrap();
     assert_eq!(plaintext, dec);
 }
 
