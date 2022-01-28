@@ -12,6 +12,7 @@ pub struct LarkSdk {
     pub config: LarkConfig,
     pub(crate) api_version: String,
     pub(crate) encrypt_key: String,
+    pub(crate) robot_name: String,
 }
 
 #[derive(Clone)]

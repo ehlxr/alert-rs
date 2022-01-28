@@ -77,6 +77,10 @@ struct Args {
     /// Encrypt Key of feishu event
     #[clap(short = 'k', long, default_value = "")]
     encrypt_key: String,
+
+    /// Robot name of feishu event echo
+    #[clap(short, long, default_value = "robot")]
+    robot_name: String,
 }
 
 #[rocket::main]
@@ -93,6 +97,7 @@ async fn main() -> Result<(), Error> {
         args.bot_id,
         args.api_version,
         args.encrypt_key,
+        args.robot_name,
     )
     .await;
 

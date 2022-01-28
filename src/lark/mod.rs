@@ -3,14 +3,13 @@ pub(crate) mod server;
 
 use self::model::*;
 use moka::future::Cache;
-use reqwest::Response;
 use tracing::{error, info};
 
 const GET_TOKEN_URL: &str = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
 const GET_ID_URL_V1: &str = "https://open.feishu.cn/open-apis/user/v1/batch_get_id?";
 const GET_ID_URL_V3: &str = "https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id";
 const WEBHOOK_URL: &str = "https://open.feishu.cn/open-apis/bot/v2/hook/";
-const MESSAGE_URL: &str = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id";
+const MESSAGE_URL: &str = "https://open.feishu.cn/open-apis/im/v1/messages";
 
 impl LarkConfig {
     fn new(max_capacity: usize) -> Self {
@@ -37,6 +36,7 @@ impl LarkSdk {
         bot_id: String,
         api_version: String,
         encrypt_key: String,
+        robot_name: String,
     ) -> Self {
         Self {
             app_id,
@@ -45,6 +45,7 @@ impl LarkSdk {
             config: LarkConfig::new(cache_capacity),
             api_version,
             encrypt_key,
+            robot_name,
         }
     }
 
@@ -185,7 +186,7 @@ impl LarkSdk {
         &self,
         bot_id: String,
         content: String,
-    ) -> Result<Response, reqwest::Error> {
+    ) -> Result<reqwest::Response, reqwest::Error> {
         let mut bid = &bot_id;
         if bot_id == "" {
             bid = &self.bot_id;
@@ -203,9 +204,16 @@ impl LarkSdk {
         Ok(res)
     }
 
-    pub async fn message(&self, content: String) -> Result<Response, reqwest::Error> {
+    pub async fn message(
+        &self,
+        receive_id_type: &str,
+        content: String,
+    ) -> Result<reqwest::Response, reqwest::Error> {
         let res = reqwest::Client::new()
-            .post(MESSAGE_URL)
+            .post(format!(
+                "{}?receive_id_type={}",
+                MESSAGE_URL, receive_id_type
+            ))
             .header(
                 "Authorization",
                 format!(

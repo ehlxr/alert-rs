@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use rocket::{
     catch, get, post,
     serde::json::{serde_json::json, Json, Value},
@@ -79,16 +81,56 @@ pub async fn message(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value 
 
     for openid in ids {
         context.insert("text", &msg.text);
-        context.insert("openid", &openid);
-        let content = TEMPLATES.render("message.tmpl", &context).unwrap();
+        context.insert("receive_id", &openid);
 
-        if let Err(e) = sdk.message(content).await {
+        let content = TEMPLATES.render("message.tmpl", &context).unwrap();
+        if let Err(e) = sdk.message("open_id", content).await {
             status = format!("{}", e);
             break;
         }
     }
 
     json!({ "status": status })
+}
+
+async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>> {
+    let message = &result["event"]["message"];
+
+    let mut context = Context::new();
+    context.insert(
+        "text",
+        message["content"]["text"].as_str().unwrap_or("hello"),
+    );
+    context.insert(
+        "receive_id",
+        message["chat_id"].as_str().unwrap_or_default(),
+    );
+    if message["chat_type"].as_str().unwrap_or_default() == "group" {
+        let is_robot = if let Some(mentions) = message["mentions"].as_array() {
+            let mut is_robot = false;
+            for mention in mentions.iter() {
+                if mention["name"].as_str().unwrap_or_default() == sdk.robot_name {
+                    is_robot = true;
+                    break;
+                }
+            }
+            is_robot
+        } else {
+            false
+        };
+
+        if is_robot {
+            context.insert("at_id", &result["event"]["sender"]["sender_id"]["union_id"]);
+        }
+    }
+
+    sdk.message(
+        "chat_id",
+        TEMPLATES.render("message.tmpl", &context).unwrap(),
+    )
+    .await?;
+
+    Ok(())
 }
 
 #[post("/event", format = "json", data = "<event>")]
@@ -116,9 +158,11 @@ pub async fn feishu_event(event: Json<Value>, sdk: &State<LarkSdk>) -> Value {
     };
 
     let result: Value = serde_json::from_str(&decryptext).unwrap();
+    robot_echo(sdk, &result).await.unwrap();
+
     if let Some(challenge) = result["challenge"].as_str() {
         json!({ "challenge": challenge })
     } else {
-        json!("")
+        json!("ok")
     }
 }
