@@ -95,12 +95,6 @@ pub async fn message(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value 
 
 async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>> {
     let message = &result["event"]["message"];
-    let mut context = Context::new();
-
-    context.insert(
-        "receive_id",
-        message["chat_id"].as_str().unwrap_or_default(),
-    );
 
     let (mention_robot, mention_key) = if let Some(mentions) = message["mentions"].as_array() {
         let mut is_robot = false;
@@ -117,6 +111,18 @@ async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>>
         (false, "")
     };
 
+    let chat_type = message["chat_type"].as_str().unwrap_or_default();
+    if chat_type == "group" && !mention_robot {
+        return Ok(());
+    }
+
+    let mut context = Context::new();
+
+    context.insert(
+        "receive_id",
+        message["chat_id"].as_str().unwrap_or_default(),
+    );
+
     let ct: Value =
         serde_json::from_str(message["content"].as_str().unwrap_or_default()).unwrap_or_default();
     context.insert(
@@ -129,15 +135,15 @@ async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>>
             .trim(),
     );
 
-    let chat_type = message["chat_type"].as_str().unwrap_or_default();
-    if (chat_type == "group" && mention_robot) || chat_type == "p2p" {
+    if mention_robot {
         context.insert("at_id", &result["event"]["sender"]["sender_id"]["union_id"]);
-        sdk.message(
-            "chat_id",
-            TEMPLATES.render("message.tmpl", &context).unwrap(),
-        )
-        .await?;
     }
+
+    sdk.message(
+        "chat_id",
+        TEMPLATES.render("message.tmpl", &context).unwrap(),
+    )
+    .await?;
 
     Ok(())
 }
