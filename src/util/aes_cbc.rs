@@ -25,6 +25,7 @@ fn gen_ascii_chars(size: usize) -> String {
     .unwrap()
 }
 
+#[allow(dead_code)]
 pub fn encrypt(key: &str, data: &str) -> Result<String, Box<dyn Error>> {
     let mut hasher = Sha256::new();
     hasher.update(key.as_bytes());
