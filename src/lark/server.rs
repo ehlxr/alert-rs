@@ -95,7 +95,6 @@ pub async fn message(message: Json<TextMessage>, sdk: &State<LarkSdk>) -> Value 
 
 async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>> {
     let message = &result["event"]["message"];
-
     let mut context = Context::new();
 
     let ct: Value =
@@ -105,6 +104,7 @@ async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>>
         "receive_id",
         message["chat_id"].as_str().unwrap_or_default(),
     );
+
     if message["chat_type"].as_str().unwrap_or_default() == "group" {
         let is_robot = if let Some(mentions) = message["mentions"].as_array() {
             let mut is_robot = false;
@@ -121,14 +121,19 @@ async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>>
 
         if is_robot {
             context.insert("at_id", &result["event"]["sender"]["sender_id"]["union_id"]);
+            sdk.message(
+                "chat_id",
+                TEMPLATES.render("message.tmpl", &context).unwrap(),
+            )
+            .await?;
         }
+    } else {
+        sdk.message(
+            "chat_id",
+            TEMPLATES.render("message.tmpl", &context).unwrap(),
+        )
+        .await?;
     }
-
-    sdk.message(
-        "chat_id",
-        TEMPLATES.render("message.tmpl", &context).unwrap(),
-    )
-    .await?;
 
     Ok(())
 }
