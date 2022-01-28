@@ -125,19 +125,13 @@ async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>>
         &ct["text"]
             .as_str()
             .unwrap_or("hello")
-            .replace(mention_key, ""),
+            .replace(mention_key, "")
+            .trim(),
     );
 
-    if message["chat_type"].as_str().unwrap_or_default() == "group" {
-        if mention_robot {
-            context.insert("at_id", &result["event"]["sender"]["sender_id"]["union_id"]);
-            sdk.message(
-                "chat_id",
-                TEMPLATES.render("message.tmpl", &context).unwrap(),
-            )
-            .await?;
-        }
-    } else {
+    let chat_type = message["chat_type"].as_str().unwrap_or_default();
+    if (chat_type == "group" && mention_robot) || chat_type == "p2p" {
+        context.insert("at_id", &result["event"]["sender"]["sender_id"]["union_id"]);
         sdk.message(
             "chat_id",
             TEMPLATES.render("message.tmpl", &context).unwrap(),
