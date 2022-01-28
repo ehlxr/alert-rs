@@ -5,7 +5,7 @@ use rocket::{
 };
 
 use tera::Context;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 use crate::{
     lark::model::{GroupTextMessage, LarkSdk, TextMessage},
@@ -101,17 +101,19 @@ pub async fn feishu_event(event: Json<Value>, sdk: &State<LarkSdk>) -> Value {
             Some(encrypt) => {
                 debug!("fetch encrypt from param: {}", encrypt);
                 match aes_cbc::decrypt(&sdk.encrypt_key, encrypt) {
-                    Ok(dt) => dt,
+                    Ok(dt) => {
+                        info!("decrypt result: {}", dt);
+                        dt
+                    }
                     Err(err) => return json!(format!("decrypt received param error {:?}", err)),
                 }
             }
             None => return json!("encrypt string is none"),
         }
     } else {
-        return json!("there is no encrypt content");
+        warn!("there is no encrypt field of received param!!!");
+        value.to_string()
     };
-
-    info!("decrypt param: {}", decryptext);
 
     let result: Value = serde_json::from_str(&decryptext).unwrap();
     if let Some(challenge) = result["challenge"].as_str() {
