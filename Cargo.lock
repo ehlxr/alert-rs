@@ -33,7 +33,6 @@ dependencies = [
  "bytebuffer",
  "chrono",
  "clap",
- "hex-literal",
  "lazy_static",
  "moka",
  "rand",
@@ -841,12 +840,6 @@ checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "hex-literal"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "http"
