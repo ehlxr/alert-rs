@@ -125,7 +125,7 @@ async fn robot_echo(sdk: &LarkSdk, result: &Value) -> Result<(), Box<dyn Error>>
 
     let ct: Value =
         serde_json::from_str(message["content"].as_str().unwrap_or_default()).unwrap_or_default();
-    let mut text = ct["text"].as_str().unwrap_or_default().to_string();
+    let mut text = ct["text"].as_str().unwrap_or("hello").to_string();
     // 如果发送消息为： @用户1 @用户2 消息内容，
     // 接收到的 content text 内容为：@_user_1 @_user_2 消息内容， @_user_1 @_user_2 为 mention_key,
     for mention_key in mention_keys {
