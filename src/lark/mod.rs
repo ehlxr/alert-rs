@@ -1,8 +1,14 @@
 pub(crate) mod model;
 pub(crate) mod server;
 
+use std::error::Error;
+
+use crate::TEMPLATES;
+
 use self::model::*;
 use moka::future::Cache;
+use serde_json::Value;
+use tera::Context;
 use tracing::{error, info};
 
 const GET_TOKEN_URL: &str = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
@@ -229,5 +235,58 @@ impl LarkSdk {
 
         info!("{:?}", res);
         Ok(res)
+    }
+
+    pub async fn robot_echo(&self, result: &Value) -> Result<(), Box<dyn Error>> {
+        let message = &result["event"]["message"];
+
+        let (mention_robot, mention_keys) = if let Some(mentions) = message["mentions"].as_array() {
+            let mut is_robot = false;
+            let mut mention_keys = vec![];
+            for mention in mentions.iter() {
+                mention_keys.push(mention["key"].as_str().unwrap_or_default());
+
+                if mention["name"].as_str().unwrap_or_default() == self.robot_name {
+                    is_robot = true;
+                    break;
+                }
+            }
+            (is_robot, mention_keys)
+        } else {
+            (false, vec![])
+        };
+
+        let chat_type = message["chat_type"].as_str().unwrap_or_default();
+        if chat_type == "group" && !mention_robot {
+            return Ok(());
+        }
+
+        let mut context = Context::new();
+        context.insert(
+            "receive_id",
+            message["chat_id"].as_str().unwrap_or_default(),
+        );
+
+        let ct: Value = serde_json::from_str(message["content"].as_str().unwrap_or_default())
+            .unwrap_or_default();
+        let mut text = ct["text"].as_str().unwrap_or("hello").to_string();
+        // 如果发送消息为： @用户1 @用户2 消息内容，
+        // 接收到的 content text 内容为：@_user_1 @_user_2 消息内容， @_user_1 @_user_2 为 mention_key,
+        for mention_key in mention_keys {
+            text = text.replace(mention_key, "").trim().to_string();
+        }
+        context.insert("text", &text);
+
+        if mention_robot {
+            context.insert("at_id", &result["event"]["sender"]["sender_id"]["union_id"]);
+        }
+
+        self.message(
+            "chat_id",
+            TEMPLATES.render("message.tmpl", &context).unwrap(),
+        )
+        .await?;
+
+        Ok(())
     }
 }
