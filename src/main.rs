@@ -10,7 +10,6 @@ use rocket::{catchers, log::LogLevel, routes, Error};
 use std::{collections::HashMap, io, sync::RwLock};
 use tera::Tera;
 use time::{format_description, macros::offset};
-use tokio::time::{sleep, Duration};
 use tracing::{debug, error, info, Level};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
@@ -170,7 +169,7 @@ async fn refresh_token(sdk: LarkSdk) {
 
     loop {
         // std::thread::sleep(core::time::Duration::from_secs(interval));
-        sleep(Duration::from_secs(interval)).await;
+        tokio::time::sleep(tokio::time::Duration::from_secs(interval)).await;
         debug!("refresh_token... ");
 
         interval = match sdk.get_token().await {
