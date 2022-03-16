@@ -1,3 +1,3 @@
 # alert_rs
 
-feishu sdk by rust
+lark sdk by rust
